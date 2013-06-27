@@ -29,29 +29,32 @@ import org.apache.xmlbeans.XmlNMTOKEN;
 import org.apache.xmlbeans.XmlOptions;
 
 // REST
-import org.dialogic.xms.*;
+import com.dialogic.xms.*;
+import com.dialogic.xms.EventDocument.*;
+import com.dialogic.xms.EventDataName.*;
+import com.dialogic.xms.EventDataDocument.*;
 
-import org.dialogic.xms.CallDocument.Call;
-import org.dialogic.xms.CallResponseDocument.CallResponse;
-import org.dialogic.xms.CallActionDocument.CallAction;
+import com.dialogic.xms.CallDocument.Call;
+import com.dialogic.xms.CallResponseDocument.CallResponse;
+import com.dialogic.xms.CallActionDocument.CallAction;
 
-import org.dialogic.xms.PlaySourceDocument.PlaySource;
-import org.dialogic.xms.PlayDocument.Play;
-import org.dialogic.xms.PlaycollectDocument.Playcollect;
-import org.dialogic.xms.PlayrecordDocument;
+import com.dialogic.xms.PlaySourceDocument.PlaySource;
+import com.dialogic.xms.PlayDocument.Play;
+import com.dialogic.xms.PlaycollectDocument.Playcollect;
+import com.dialogic.xms.PlayrecordDocument;
 
-import org.dialogic.xms.JoinDocument.Join;
-import org.dialogic.xms.UnjoinDocument.Unjoin;
+import com.dialogic.xms.JoinDocument.Join;
+import com.dialogic.xms.UnjoinDocument.Unjoin;
 
-import org.dialogic.xms.StopDocument.Stop;
+import com.dialogic.xms.StopDocument.Stop;
 
-import org.dialogic.xms.AddPartyDocument.AddParty;
-import org.dialogic.xms.RemovePartyDocument.RemoveParty;
-import org.dialogic.xms.MediaDirection;
+import com.dialogic.xms.AddPartyDocument.AddParty;
+import com.dialogic.xms.RemovePartyDocument.RemoveParty;
+import com.dialogic.xms.MediaDirection;
 
-import org.dialogic.xms.EventDocument;
-import org.dialogic.xms.EventDataDocument;
-import org.dialogic.xms.EventDataName;
+import com.dialogic.xms.EventDocument;
+import com.dialogic.xms.EventDataDocument;
+import com.dialogic.xms.EventDataName;
 
 
 /**
@@ -726,7 +729,16 @@ public class XMSRestCall extends XMSCall{
                     logger.info("Processing play end event");
                    m_pendingtransactionInfo.Reset();
                     setState(XMSCallState.CONNECTED);
+                    /*
                     List<EventDataDocument.EventData> l_datalist=l_evt.event.getEventDataList();
+                        for(EventDataDocument.EventData ed: l_datalist){
+                            if (ed.getName() == EventDataName.REASON){
+                                l_callbackevt.setReason(ed.getValue());
+                            }
+                        }
+                   //Above has been depricated, changing to getXXXAray
+                   */
+                    EventData[] l_datalist=l_evt.event.getEventDataArray();
                         for(EventDataDocument.EventData ed: l_datalist){
                             if (ed.getName() == EventDataName.REASON){
                                 l_callbackevt.setReason(ed.getValue());
@@ -745,7 +757,8 @@ public class XMSRestCall extends XMSCall{
                     } else{
                         l_callbackevt.CreateEvent(XMSEventType.CALL_PLAYCOLLECT_END, this, "", "", l_evt.toString());
                     }
-                     List<EventDataDocument.EventData> l_datalist=l_evt.event.getEventDataList();
+                     //List<EventDataDocument.EventData> l_datalist=l_evt.event.getEventDataList();
+                    EventData[] l_datalist=l_evt.event.getEventDataArray();
                         for(EventDataDocument.EventData ed: l_datalist){
                             if(ed.getName() == EventDataName.DIGITS){
                                 l_callbackevt.setData(ed.getValue());
@@ -762,7 +775,8 @@ public class XMSRestCall extends XMSCall{
                     m_pendingtransactionInfo.Reset();
                     if(getState()== XMSCallState.RECORD){
                         
-                        List<EventDataDocument.EventData> l_datalist=l_evt.event.getEventDataList(); // 30-Jul-2012 dsl
+                        //List<EventDataDocument.EventData> l_datalist=l_evt.event.getEventDataList(); // 30-Jul-2012 dsl
+                        EventData[] l_datalist=l_evt.event.getEventDataArray(); // 30-Jul-2012 dsl
                         for(EventDataDocument.EventData ed: l_datalist){                            // 30-Jul-2012 dsl
                             if (ed.getName() == EventDataName.REASON){                              // 30-Jul-2012 dsl
                                 l_callbackevt.setReason(ed.getValue());                             // 30-Jul-2012 dsl
@@ -774,7 +788,7 @@ public class XMSRestCall extends XMSCall{
                         
                     } else{
                         
-                        List<EventDataDocument.EventData> l_datalist=l_evt.event.getEventDataList(); // 30-Jul-2012 dsl
+                        EventData[] l_datalist=l_evt.event.getEventDataArray(); // 30-Jul-2012 dsl
                         for(EventDataDocument.EventData ed: l_datalist){                            // 30-Jul-2012 dsl
                             if (ed.getName() == EventDataName.REASON){                              // 30-Jul-2012 dsl
                                 l_callbackevt.setReason(ed.getValue());                             // 30-Jul-2012 dsl
@@ -809,7 +823,7 @@ public class XMSRestCall extends XMSCall{
                     logger.info("Processing connected event");
                     setState(XMSCallState.CONNECTED);
                     
-                    List<EventDataDocument.EventData> l_datalist=l_evt.event.getEventDataList(); // 27-Jul-2012 dsl
+                    EventData[] l_datalist=l_evt.event.getEventDataArray(); // 27-Jul-2012 dsl
                         for(EventDataDocument.EventData ed: l_datalist){                         // 27-Jul-2012 dsl
                             if (ed.getName() == EventDataName.REASON){                           // 27-Jul-2012 dsl
                                 l_callbackevt.setReason(ed.getValue());                          // 27-Jul-2012 dsl
@@ -821,7 +835,7 @@ public class XMSRestCall extends XMSCall{
                 }else if (l_evt.eventType.contentEquals("hangup")) {
                     logger.info("Processing hangup event");
                     setState(XMSCallState.DISCONNECTED);
-                    List<EventDataDocument.EventData> l_datalist=l_evt.event.getEventDataList();// 30-Jul-2012 dsl
+                    EventData[] l_datalist=l_evt.event.getEventDataArray();// 30-Jul-2012 dsl
                     for(EventDataDocument.EventData ed: l_datalist){                            // 30-Jul-2012 dsl
                         if (ed.getName() == EventDataName.REASON){                              // 30-Jul-2012 dsl
                             l_callbackevt.setReason(ed.getValue());                             // 30-Jul-2012 dsl

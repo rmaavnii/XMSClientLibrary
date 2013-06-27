@@ -4,7 +4,7 @@
  */
 package com.dialogic.XMSClientLibrary;
 
-import org.dialogic.xms.EventDocument;
+import com.dialogic.xms.EventDocument;
 
 /**
  *

@@ -16,7 +16,8 @@ import org.apache.log4j.Logger;
 import org.apache.log4j.PropertyConfigurator;
 import org.apache.xmlbeans.XmlNMTOKEN;
 
-import org.dialogic.xms.*;
+import com.dialogic.xms.*;
+import com.dialogic.xms.EventDataDocument.*;
 
 
 /**
@@ -219,7 +220,7 @@ public class XMSRestConference extends XMSConference{
                     logger.info("Processing play end event");
                    m_pendingtransactionInfo.Reset();
                     //setState(XMSCallState.CONNECTED);
-                    List<EventDataDocument.EventData> l_datalist=l_evt.event.getEventDataList();
+                    EventData[] l_datalist=l_evt.event.getEventDataArray();
                         for(EventDataDocument.EventData ed: l_datalist){
                             if (ed.getName() == EventDataName.REASON){
                                 l_callbackevt.setReason(ed.getValue());

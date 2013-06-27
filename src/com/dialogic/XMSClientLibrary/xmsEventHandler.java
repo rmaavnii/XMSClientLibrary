@@ -21,10 +21,10 @@ import org.apache.http.util.EntityUtils;
 import org.apache.log4j.Appender;
 import org.apache.log4j.Logger;
 import org.apache.xmlbeans.XmlException;
-import org.dialogic.xms.*;
-import org.dialogic.xms.CallDocument.Call;
-import org.dialogic.xms.EventhandlerResponseDocument.EventhandlerResponse;
-import org.dialogic.xms.EventType;
+import com.dialogic.xms.*;
+import com.dialogic.xms.CallDocument.Call;
+import com.dialogic.xms.EventhandlerResponseDocument.EventhandlerResponse;
+import com.dialogic.xms.EventType;
 
 import java.util.Observable;
 import java.util.Observer;  /* this is Event Handler */
