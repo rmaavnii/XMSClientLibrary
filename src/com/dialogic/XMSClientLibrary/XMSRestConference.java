@@ -222,7 +222,7 @@ public class XMSRestConference extends XMSConference{
                     //setState(XMSCallState.CONNECTED);
                     EventData[] l_datalist=l_evt.event.getEventDataArray();
                         for(EventDataDocument.EventData ed: l_datalist){
-                            if (ed.getName() == EventDataName.REASON){
+                            if (ed.getName().contentEquals(EventDataName.REASON.toString())){
                                 l_callbackevt.setReason(ed.getValue());
                             }
                         }

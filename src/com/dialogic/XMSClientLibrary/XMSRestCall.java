@@ -740,7 +740,7 @@ public class XMSRestCall extends XMSCall{
                    */
                     EventData[] l_datalist=l_evt.event.getEventDataArray();
                         for(EventDataDocument.EventData ed: l_datalist){
-                            if (ed.getName() == EventDataName.REASON){
+                            if (ed.getName().contentEquals( EventDataName.REASON.toString())){
                                 l_callbackevt.setReason(ed.getValue());
                             }
                         }
@@ -760,10 +760,10 @@ public class XMSRestCall extends XMSCall{
                      //List<EventDataDocument.EventData> l_datalist=l_evt.event.getEventDataList();
                     EventData[] l_datalist=l_evt.event.getEventDataArray();
                         for(EventDataDocument.EventData ed: l_datalist){
-                            if(ed.getName() == EventDataName.DIGITS){
+                            if(ed.getName().contentEquals(EventDataName.DIGITS.toString())){
                                 l_callbackevt.setData(ed.getValue());
                                 logger.info("Digits Collected: " + l_callbackevt.getData());
-                            } else if (ed.getName() == EventDataName.REASON){
+                            } else if (ed.getName().contentEquals(EventDataName.REASON.toString())){
                                 l_callbackevt.setReason(ed.getValue());
                             }
                         }
@@ -778,7 +778,7 @@ public class XMSRestCall extends XMSCall{
                         //List<EventDataDocument.EventData> l_datalist=l_evt.event.getEventDataList(); // 30-Jul-2012 dsl
                         EventData[] l_datalist=l_evt.event.getEventDataArray(); // 30-Jul-2012 dsl
                         for(EventDataDocument.EventData ed: l_datalist){                            // 30-Jul-2012 dsl
-                            if (ed.getName() == EventDataName.REASON){                              // 30-Jul-2012 dsl
+                            if (ed.getName().contentEquals(EventDataName.REASON.toString())){                              // 30-Jul-2012 dsl
                                 l_callbackevt.setReason(ed.getValue());                             // 30-Jul-2012 dsl
                             }                                                                       // 30-Jul-2012 dsl
                         }                                                                           // 30-Jul-2012 dsl
@@ -790,7 +790,7 @@ public class XMSRestCall extends XMSCall{
                         
                         EventData[] l_datalist=l_evt.event.getEventDataArray(); // 30-Jul-2012 dsl
                         for(EventDataDocument.EventData ed: l_datalist){                            // 30-Jul-2012 dsl
-                            if (ed.getName() == EventDataName.REASON){                              // 30-Jul-2012 dsl
+                            if (ed.getName().contentEquals(EventDataName.REASON.toString())){                              // 30-Jul-2012 dsl
                                 l_callbackevt.setReason(ed.getValue());                             // 30-Jul-2012 dsl
                             }                                                                       // 30-Jul-2012 dsl
                         }                                                                           // 30-Jul-2012 dsl
@@ -825,7 +825,7 @@ public class XMSRestCall extends XMSCall{
                     
                     EventData[] l_datalist=l_evt.event.getEventDataArray(); // 27-Jul-2012 dsl
                         for(EventDataDocument.EventData ed: l_datalist){                         // 27-Jul-2012 dsl
-                            if (ed.getName() == EventDataName.REASON){                           // 27-Jul-2012 dsl
+                            if (ed.getName().contentEquals(EventDataName.REASON.toString())){                           // 27-Jul-2012 dsl
                                 l_callbackevt.setReason(ed.getValue());                          // 27-Jul-2012 dsl
                             } 
                         }
@@ -837,7 +837,7 @@ public class XMSRestCall extends XMSCall{
                     setState(XMSCallState.DISCONNECTED);
                     EventData[] l_datalist=l_evt.event.getEventDataArray();// 30-Jul-2012 dsl
                     for(EventDataDocument.EventData ed: l_datalist){                            // 30-Jul-2012 dsl
-                        if (ed.getName() == EventDataName.REASON){                              // 30-Jul-2012 dsl
+                        if (ed.getName().contentEquals(EventDataName.REASON.toString())){                              // 30-Jul-2012 dsl
                             l_callbackevt.setReason(ed.getValue());                             // 30-Jul-2012 dsl
                         } 
                     }
