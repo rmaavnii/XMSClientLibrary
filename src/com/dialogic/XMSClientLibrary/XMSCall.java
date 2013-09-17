@@ -29,7 +29,7 @@ public abstract class XMSCall extends XMSObject{
      
      protected XMSCallState m_state;
      
-     
+     private XMSCallType m_calltype = XMSCallType.UNKNOWN;
      private String m_connectionaddress = null;
      
      public XMSMakecallOptions MakecallOptions = new XMSMakecallOptions();
@@ -66,6 +66,20 @@ public abstract class XMSCall extends XMSObject{
          FunctionLogger logger=new FunctionLogger("setConnectionAddress",this,m_logger);
          logger.args(a_addr);
          m_connectionaddress = a_addr;
+     }
+     /**
+      * Returns the Current type of the call 
+      * may be SIP, WEBRTC or UNKNOWN
+      * @return
+      */
+     public XMSCallType getCallType()
+    {
+        return m_calltype;
+    }
+     protected void setCallType( XMSCallType a_type){
+         FunctionLogger logger=new FunctionLogger("setCallType",this,m_logger);
+         logger.args(a_type);
+         m_calltype=a_type;
      }
      /**
       * Returns the Current state of the object

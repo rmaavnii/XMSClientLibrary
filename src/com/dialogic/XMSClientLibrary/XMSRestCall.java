@@ -107,6 +107,22 @@ public class XMSRestCall extends XMSCall{
     private void SetPendingTransactionInfo(){
         
     }
+    protected XMSCallType getCallTypeFromURI(String a_uri){
+        FunctionLogger logger=new FunctionLogger("getCallTypeFromURI",this,m_logger);
+        logger.args(a_uri);
+        
+        
+        if(a_uri.contains("rtc:")){
+            logger.info(a_uri + " contains rtc: setting call type to WEBRTC");
+            return XMSCallType.WEBRTC;
+        } else if (a_uri.contains("sip:")){
+            logger.info(a_uri + " contains sip: setting call type to SIP");
+            return XMSCallType.SIP;
+        } else {
+            logger.info(a_uri + " does not include sip: or rtc: defaulting to call type to SIP");
+            return XMSCallType.SIP;
+        }
+    }
     /**
      * Wait for a new REST call 
      * @return 
@@ -145,7 +161,10 @@ public class XMSRestCall extends XMSCall{
         logger.args("Dest="+dest,MakecallOptions);
         String XMLPAYLOAD;
         SendCommandResponse RC ;
-
+        
+        //Set the call typeto webrtc based on if the URI has rtc:
+        setCallType(getCallTypeFromURI(dest));
+        
         // RDM: Build and return a makecall payload
         XMLPAYLOAD = buildMakecallPayload(dest); 
 
@@ -202,7 +221,7 @@ public class XMSRestCall extends XMSCall{
                 setConnectionAddress(null);
                 m_connector.RemoveCallFromActiveCallList(m_callIdentifier);
                 m_callIdentifier = null;
-                
+                setCallType(XMSCallType.UNKNOWN);
                 setState(XMSCallState.NULL);
                 return XMSReturnCode.SUCCESS;
 
@@ -246,7 +265,7 @@ public class XMSRestCall extends XMSCall{
         
          if (RC.get_scr_status_code() == 200){
             setState(XMSCallState.CONNECTED);
-            //TODO: Should likely make a way to obtain the connection info       
+            //TODO: Should likely make a way to obtain the connection info 
                     setConnectionAddress(RC.get_scr_source());
                     return XMSReturnCode.SUCCESS;
 
@@ -808,7 +827,22 @@ public class XMSRestCall extends XMSCall{
                     UnblockIfNeeded(l_callbackevt);
                     //end end_playrecord
                 }else if (l_evt.eventType.contentEquals("incoming")) {
+                    
+                    //Check the caller_uri to see if this is a RTC or SIP.  To do this will need to parst the raw string
                     logger.info("Processing incoming event");
+                       int start=l_evt.rawstring.indexOf("name=\"caller_uri\" value=\"");
+                    
+                       int end=l_evt.rawstring.indexOf("/>", start);
+                       if(start > -1 && end > -1){
+                            String caller_uri = (String) l_evt.rawstring.subSequence(start, end);
+                            setCallType(getCallTypeFromURI(caller_uri));
+                       } else{
+                           logger.info("Can't detect call type from inboutn caller_uri, setting to SIP by default");
+                           setCallType(XMSCallType.SIP);
+                       }
+                       //TODO Fixt this to something nicer
+                       
+                       
                     if(WaitcallOptions.m_autoConnectEnabled){
                         Answercall();
                         l_callbackevt.CreateEvent(XMSEventType.CALL_CONNECTED, this, "", "", l_evt.toString());
@@ -906,7 +940,13 @@ public class XMSRestCall extends XMSCall{
             case UNKNOWN:
                 l_call.setMedia(MediaType.UNKNOWN);
         } // end switch
-
+        
+        if(getCallType() == XMSCallType.WEBRTC){
+            logger.info("WebRTC call detected, setting ice=YES and encryption=dtls");
+            l_call.setIce(BooleanType.YES);
+            l_call.setEncryption(RtpEncryptionOption.DTLS);
+        }
+        
         //logger.debug("RAW REST generated...." + l_WMS.toString());
           ByteArrayOutputStream l_newDialog = new ByteArrayOutputStream();
 

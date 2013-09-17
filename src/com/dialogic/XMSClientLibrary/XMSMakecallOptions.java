@@ -11,9 +11,8 @@ package com.dialogic.XMSClientLibrary;
  */
 public class XMSMakecallOptions {
     boolean m_cpaEnabled;
-    XMSMediaType m_mediaType;
-
-
+    XMSMediaType m_mediaType; 
+    
     /**
      * This will Instantiate and Reset all the values to their defaults
      */
@@ -26,7 +25,7 @@ public class XMSMakecallOptions {
     public void Reset(){
         m_cpaEnabled = false;
         m_mediaType = XMSMediaType.AUDIO;
-
+        
     }
     /**
      * Set if CPA should be enabled on the outbound call
