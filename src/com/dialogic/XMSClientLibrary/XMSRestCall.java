@@ -22,6 +22,9 @@ import java.util.Observable;
 import java.util.Observer;  /* this is Event Handler */
 import java.util.List;
 
+//regex
+import java.util.regex.*;
+
 // XML Beans
 import org.apache.xmlbeans.XmlObject;
 import org.apache.xmlbeans.XmlException;
@@ -182,6 +185,7 @@ public class XMSRestCall extends XMSCall{
                         logger.error("Exception:"+ex);
                     }
                     setConnectionAddress(dest);
+                    setCalledAddress(dest);
                     return XMSReturnCode.SUCCESS;
 
         } else {
@@ -219,6 +223,7 @@ public class XMSRestCall extends XMSCall{
             // Check if the delete call was OK.
         if (RC.get_scr_status_code() == 204){
                 setConnectionAddress(null);
+                setCalledAddress(null);
                 m_connector.RemoveCallFromActiveCallList(m_callIdentifier);
                 m_callIdentifier = null;
                 setCallType(XMSCallType.UNKNOWN);
@@ -236,6 +241,13 @@ public class XMSRestCall extends XMSCall{
 
     } // end drop call 
 
+ String RestGetCalledAddress(String rawxml){
+     FunctionLogger logger=new FunctionLogger("******RestGetCalledAddress",this,m_logger);
+        logger.args(rawxml);
+        
+     
+     return "NONE";
+ }
    /**
      * This Answer an incoming call.  
      *
@@ -266,7 +278,9 @@ public class XMSRestCall extends XMSCall{
          if (RC.get_scr_status_code() == 200){
             setState(XMSCallState.CONNECTED);
             //TODO: Should likely make a way to obtain the connection info 
-                    setConnectionAddress(RC.get_scr_source());
+                   
+                   setConnectionAddress(RC.get_scr_source());
+         //          setCalledAddress(RestGetCalledAddress(RC.get_scr_return_xml_payload()));  
                     return XMSReturnCode.SUCCESS;
 
         } else {
@@ -728,6 +742,7 @@ public class XMSRestCall extends XMSCall{
         
     } // end playcollect
     
+         
       /**
      * This is the Notify handler that will be called by EventThread when
      * new events are created.
@@ -834,14 +849,30 @@ public class XMSRestCall extends XMSCall{
                     
                        int end=l_evt.rawstring.indexOf("/>", start);
                        if(start > -1 && end > -1){
-                            String caller_uri = (String) l_evt.rawstring.subSequence(start, end);
+                            String caller_uri = unescapeXML((String) l_evt.rawstring.subSequence(start, end));
+                            
                             setCallType(getCallTypeFromURI(caller_uri));
                        } else{
                            logger.info("Can't detect call type from inboutn caller_uri, setting to SIP by default");
                            setCallType(XMSCallType.SIP);
                        }
+                                    
                        //TODO Fixt this to something nicer
-                       
+                    //Check the caller_uri to see if this is a RTC or SIP.  To do this will need to parst the raw string
+                    logger.info("Processing incoming event");
+                       start=l_evt.rawstring.indexOf("name=\"called_uri\" value=\"");
+                    
+                       end=l_evt.rawstring.indexOf("/>", start);
+                       if(start > -1 && end > -1){
+                            String called_uri = unescapeXML((String) l_evt.rawstring.subSequence(start, end));
+                            
+                            setCalledAddress(called_uri);   
+                       } else{
+                           logger.info("Can't detect called_uri in inbound message, setting to empty string");
+                           //setCallType(XMSCallType.SIP);
+                           setCalledAddress("");
+                       }
+                       //TODO fix this too
                        
                     if(WaitcallOptions.m_autoConnectEnabled){
                         Answercall();
@@ -942,9 +973,10 @@ public class XMSRestCall extends XMSCall{
         } // end switch
         
         if(getCallType() == XMSCallType.WEBRTC){
-            logger.info("WebRTC call detected, setting ice=YES and encryption=dtls");
+            logger.info("WebRTC call detected, setting dtmfmode = OUTOFBAND, ice=YES and encryption=dtls");
             l_call.setIce(BooleanType.YES);
             l_call.setEncryption(RtpEncryptionOption.DTLS);
+            l_call.setDtmfMode(DtmfModeOption.OUTOFBAND);
         }
         
         //logger.debug("RAW REST generated...." + l_WMS.toString());
@@ -1882,5 +1914,50 @@ private String buildPlayRecordPayload(String a_playfile,String a_recfile) {
        // logger.debug ("Returning Payload:\n " + l_rqStr);
         return l_rqStr;  // Return the requested string...
     } // end buildPlayCollectPayload
+public static String unescapeXML( final String xml )
+{
+    Pattern xmlEntityRegex = Pattern.compile( "&(#?)([^;]+);" );
+    //Unfortunately, Matcher requires a StringBuffer instead of a StringBuilder
+    StringBuffer unescapedOutput = new StringBuffer( xml.length() );
 
+    Matcher m = xmlEntityRegex.matcher( xml );
+    Map<String,String> builtinEntities = null;
+    String entity;
+    String hashmark;
+    String ent;
+    int code;
+    while ( m.find() ) {
+        ent = m.group(2);
+        hashmark = m.group(1);
+        if ( (hashmark != null) && (hashmark.length() > 0) ) {
+            code = Integer.parseInt( ent );
+            entity = Character.toString( (char) code );
+        } else {
+            //must be a non-numerical entity
+            if ( builtinEntities == null ) {
+                builtinEntities = buildBuiltinXMLEntityMap();
+            }
+            entity = builtinEntities.get( ent );
+            if ( entity == null ) {
+                //not a known entity - ignore it
+                entity = "&" + ent + ';';
+            }
+        }
+        m.appendReplacement( unescapedOutput, entity );
+    }
+    m.appendTail( unescapedOutput );
+
+    return unescapedOutput.toString();
+}
+
+private static Map<String,String> buildBuiltinXMLEntityMap()
+{
+    Map<String,String> entities = new HashMap<String,String>(10);
+    entities.put( "lt", "<" );
+    entities.put( "gt", ">" );
+    entities.put( "amp", "&" );
+    entities.put( "apos", "'" );
+    entities.put( "quot", "\"" );
+    return entities;
+}
 }

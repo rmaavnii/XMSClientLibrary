@@ -21,7 +21,7 @@ public class FunctionLogger {
      String m_function;
      Object m_obj;
      
-     protected FunctionLogger(String a_func,Object a_obj,Logger a_log){
+     public FunctionLogger(String a_func,Object a_obj,Logger a_log){
          m_function=a_func;
          if(a_obj !=null){
             m_obj=a_obj;

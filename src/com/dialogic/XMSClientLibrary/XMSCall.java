@@ -31,7 +31,7 @@ public abstract class XMSCall extends XMSObject{
      
      private XMSCallType m_calltype = XMSCallType.UNKNOWN;
      private String m_connectionaddress = null;
-     
+     private String m_calledaddress = null;
      public XMSMakecallOptions MakecallOptions = new XMSMakecallOptions();
      public XMSWaitcallOptions WaitcallOptions = new XMSWaitcallOptions();
      public XMSAnswercallOptions AnswercallOptions = WaitcallOptions;  
@@ -67,6 +67,22 @@ public abstract class XMSCall extends XMSObject{
          logger.args(a_addr);
          m_connectionaddress = a_addr;
      }
+     
+     /**
+      * Returns the address Called to establish the connection.  This will be the
+      * address calledpartyURI on the waitcall  scenario or the destination address
+      * in a Makecall scenario.  THis address is cleared when the call is disconnected
+      * @return - ConnectionAddress
+      */
+     public String getCalledAddress(){
+         return m_calledaddress;
+     }
+     protected  void setCalledAddress(String a_addr){
+         FunctionLogger logger=new FunctionLogger("setCalledAddress",this,m_logger);
+         logger.args(a_addr);
+         m_calledaddress = a_addr;
+     }
+     
      /**
       * Returns the Current type of the call 
       * may be SIP, WEBRTC or UNKNOWN
