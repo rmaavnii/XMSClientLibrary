@@ -206,20 +206,32 @@ public class XMSRestCall extends XMSCall{
      */
      @Override
     public XMSReturnCode Dropcall(){
-        FunctionLogger logger=new FunctionLogger("Dropcall",this,m_logger);
+       FunctionLogger logger=new FunctionLogger("Dropcall",this,m_logger);
 
         String l_urlext;
         SendCommandResponse RC ;
-        if(getState() == XMSCallState.NULL){
+        if(getState() == XMSCallState.NULL ){
             logger.info("Call is already in NULL state, not sending drop but instead just returning");
             //TODO figure out if this should return success or bad state.
             //15-Jun-2012 dsl - i think returning success is fine.
             return XMSReturnCode.SUCCESS;
         } else {
-            l_urlext = "calls/" + m_callIdentifier ;
+            if(getState() == XMSCallState.DISCONNECTED){
+                logger.info("Call is already in DISCONNECTED state, just cleaning up internals");
+                setConnectionAddress(null);
+                setCalledAddress(null);
+                m_connector.RemoveCallFromActiveCallList(m_callIdentifier);
+                m_callIdentifier = null;
+                setCallType(XMSCallType.UNKNOWN);
+                setState(XMSCallState.NULL);
+                return XMSReturnCode.SUCCESS;
+  
+            }
+                else {
+                l_urlext = "calls/" + m_callIdentifier ;
 
-            RC = m_connector.SendCommand(this,RESTOPERATION.DELETE, l_urlext, null);
-
+                RC = m_connector.SendCommand(this,RESTOPERATION.DELETE, l_urlext, null);
+            }
             // Check if the delete call was OK.
         if (RC.get_scr_status_code() == 204){
                 setConnectionAddress(null);
@@ -238,7 +250,6 @@ public class XMSRestCall extends XMSCall{
 
             } // end if
         }
-
     } // end drop call 
 
  String RestGetCalledAddress(String rawxml){
