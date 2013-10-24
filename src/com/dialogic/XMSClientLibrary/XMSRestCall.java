@@ -1347,7 +1347,12 @@ private String buildPlayRecordPayload(String a_playfile,String a_recfile) {
 
         l_call.setAnswer(BooleanType.YES);
     //    logger.debug("RAW REST generated...."+l_WMS.toString());
-        
+         if(getCallType() == XMSCallType.WEBRTC){
+            logger.info("WebRTC call detected, setting dtmfmode = OUTOFBAND, ice=YES and encryption=dtls");
+            l_call.setIce(BooleanType.YES);
+            l_call.setEncryption(RtpEncryptionOption.DTLS);
+            l_call.setDtmfMode(DtmfModeOption.OUTOFBAND);
+        }
 
         ByteArrayOutputStream l_newDialog = new ByteArrayOutputStream();
 
