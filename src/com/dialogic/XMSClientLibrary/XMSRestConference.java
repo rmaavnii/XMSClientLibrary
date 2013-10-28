@@ -318,20 +318,23 @@ public class XMSRestConference extends XMSConference{
             l_conf.setEchoCancellation(BooleanType.NO);
             
         } // end if
-/*TODO: Why is there not setting of media types here even know it is in the schema
+
         // Set Media getType parm
         switch (ConferenceOptions.m_MediaType) {
             case AUDIO:
-                l_conf.setMedia(MediaType.AUDIO);
+                l_conf.setType(MediaType.AUDIO);
+                //l_conf.setMedia(MediaType.AUDIO);
                 break;
             case VIDEO:
-                l_conf.setMedia(MediaType.AUDIOVIDEO);
+                l_conf.setType(MediaType.AUDIOVIDEO);
+              //  l_conf.setMedia(MediaType.AUDIOVIDEO);
                 break;
             case UNKNOWN:
-                l_conf.setMedia(MediaType.UNKNOWN);
+                l_conf.setType(MediaType.UNKNOWN);
+                //l_conf.setMedia(MediaType.UNKNOWN);
         } // end switch
 
-* */
+
         //logger.debug("RAW REST generated...." + l_WMS.toString());
           ByteArrayOutputStream l_newDialog = new ByteArrayOutputStream();
 
