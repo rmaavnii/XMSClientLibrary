@@ -37,7 +37,7 @@ public class XMSAddOptions {
      * Set the attribute for the party video component (INACTIVE,RECVONLY,SENDONLY,SENDRECEIVE or AUTOMATIC)
      * @param a_direction 
      */
-    public void SetVideoDrection(XMSMediaDirection a_direction){
+    public void SetVideoDirection(XMSMediaDirection a_direction){
         m_videodirection=a_direction; 
     }
  //   public String GetMediaTypeAsString(){

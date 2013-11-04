@@ -135,7 +135,16 @@ public class SendCommandResponse {
         
     }
 
-
+@Override
+public String toString(){
+    String RetStr = "scr_status_code="+scr_status_code+
+    " scr_identifier="+scr_identifier+
+    " scr_transaction_id="+scr_transaction_id+
+    " src_source="+src_source+
+    " scr_return_xml_payload="+scr_return_xml_payload;
+    
+    return RetStr;
+}
 
 
 

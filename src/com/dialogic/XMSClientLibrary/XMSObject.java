@@ -235,6 +235,14 @@ public abstract class XMSObject extends Observable implements Observer{
     public XMSEvent getLastEvent(){
         return m_lastevt;
     }
+    /**
+     * THis function will sets the last event that was 
+     * dispatched by the call object.  
+     * @return 
+     */
+    public void setLastEvent(XMSEvent a_evt){
+        m_lastevt=a_evt;
+    }
         /**
      * Block the execution thread if needed for sync mode or if there
      * are no events registered for the condition

@@ -33,6 +33,7 @@ public abstract class XMSCall extends XMSObject{
      private String m_connectionaddress = null;
      private String m_calledaddress = null;
      public XMSMakecallOptions MakecallOptions = new XMSMakecallOptions();
+     public XMSUpdatecallOptions UpdatecallOptions= new XMSUpdatecallOptions();
      public XMSWaitcallOptions WaitcallOptions = new XMSWaitcallOptions();
      public XMSAnswercallOptions AnswercallOptions = WaitcallOptions;  
      //public XMSAnswercallOptions AnswercallOptions = new XMSAnswercallOptions();  
@@ -245,4 +246,8 @@ public abstract class XMSCall extends XMSObject{
          //TODO Is this better called PlayAndCollect or PlayAndCollectDigits
         return XMSReturnCode.NOT_IMPLEMENTED;
     } 
+     
+     public XMSReturnCode Updatecall(){
+         return XMSReturnCode.NOT_IMPLEMENTED;
+     }
 }

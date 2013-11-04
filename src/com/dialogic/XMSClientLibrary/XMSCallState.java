@@ -20,6 +20,7 @@ public enum XMSCallState {
     JOINING,
     WAITCALL, // Waiting for an inbound call
     OFFERED, // inbound calls
+    UPDATECALL,
     DISCONNECTED, 
     REJECTED
 }

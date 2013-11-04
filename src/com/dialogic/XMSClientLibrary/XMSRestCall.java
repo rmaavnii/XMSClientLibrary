@@ -175,17 +175,25 @@ public class XMSRestCall extends XMSCall{
         RC = m_connector.SendCommand(this,RESTOPERATION.POST, "calls", XMLPAYLOAD);
         
          if (RC.get_scr_status_code() == 201){
-            m_pendingtransactionInfo.setDescription("Makecall Destination"+dest);
-            m_pendingtransactionInfo.setTransactionId(RC.get_scr_transaction_id());
-            m_pendingtransactionInfo.setResponseData(RC);
-            setState(XMSCallState.MAKECALL);
-                    try {
-                        BlockIfNeeded(XMSEventType.CALL_CONNECTED);
-                    } catch (InterruptedException ex) {
-                        logger.error("Exception:"+ex);
+             if(MakecallOptions.m_signalingEnabled){
+                m_pendingtransactionInfo.setDescription("Makecall Destination"+dest);
+                m_pendingtransactionInfo.setTransactionId(RC.get_scr_transaction_id());
+                m_pendingtransactionInfo.setResponseData(RC);
+                setState(XMSCallState.MAKECALL);
+                        try {
+                            BlockIfNeeded(XMSEventType.CALL_CONNECTED);
+                        } catch (InterruptedException ex) {
+                            logger.error("Exception:"+ex);
+                        }
+                        setConnectionAddress(dest);
+                        setCalledAddress(dest);
+                    } else {
+                        XMSEvent l_callbackevt = new XMSEvent();
+                        l_callbackevt.CreateEvent(XMSEventType.CALL_CONNECTED, this, RC.get_scr_return_xml_payload(), "", RC.toString());
+                        setLastEvent(l_callbackevt);
+                        
+                        setState(XMSCallState.CONNECTED);
                     }
-                    setConnectionAddress(dest);
-                    setCalledAddress(dest);
                     return XMSReturnCode.SUCCESS;
 
         } else {
@@ -198,6 +206,69 @@ public class XMSRestCall extends XMSCall{
         
     }
    
+    /**
+     * Send a XMS Message 
+     * @return 
+     * Event - NONE
+     */
+    public SendCommandResponse SendMessage(String XMLPAYLOAD){
+        FunctionLogger logger=new FunctionLogger("SendMessage",this,m_logger);
+        
+        SendCommandResponse RC ;
+        
+        
+        //logger.info("Sending message ---->  " + XMLPAYLOAD);
+        RC = m_connector.SendCommand(this,RESTOPERATION.PUT, "calls", XMLPAYLOAD);
+        
+         if (RC.get_scr_status_code() == 201){
+            return RC;
+
+        } else {
+
+            logger.info("Status Code: " + RC.get_scr_status_code());
+           
+            return RC;
+
+        }
+        
+    }
+     /**
+     * Update a REST call 
+     * @return 
+     * Event - NONE
+     */
+    @Override
+    public XMSReturnCode Updatecall(){
+        FunctionLogger logger=new FunctionLogger("Updatecall",this,m_logger);
+        logger.args(UpdatecallOptions);
+       String l_urlext;
+        SendCommandResponse RC ;
+        //todo!!: create the payload and add the call id.
+        l_urlext = "calls/" + m_callIdentifier;
+
+        String XMLPAYLOAD;
+       
+        // RDM: Build and return a updatecall payload
+        XMLPAYLOAD = buildUpdatecallPayload(); 
+
+        //logger.info("Sending message ---->  " + XMLPAYLOAD);
+        RC = m_connector.SendCommand(this,RESTOPERATION.PUT, l_urlext, XMLPAYLOAD);
+        
+         if (RC.get_scr_status_code() == 200){
+                    XMSEvent l_callbackevt = new XMSEvent();
+                    l_callbackevt.CreateEvent(XMSEventType.CALL_UPDATED, this, RC.get_scr_return_xml_payload(), "", RC.toString());
+                    setLastEvent(l_callbackevt);
+            return XMSReturnCode.SUCCESS;
+
+        } else {
+
+            logger.info("Update Call Failed, Status Code: " + RC.get_scr_status_code());
+           
+            return XMSReturnCode.FAILURE;
+
+        }
+        
+    }
     /**
      *  Drops the call by sending messages to the XMS server.
      *
@@ -928,6 +999,109 @@ public class XMSRestCall extends XMSCall{
 
     
     /**
+     * Build the payload string to update a call
+     * 
+     * @param a_destination - where you want to call.
+     * 
+     * @return Payload string  
+     * 
+     */
+    
+    private String buildUpdatecallPayload() {
+        
+        FunctionLogger logger=new FunctionLogger("buildUpdatecallPayload",this,m_logger);
+        String l_rqStr = "";
+
+        WebServiceDocument l_WMSdoc;
+        WebServiceDocument.WebService l_WMS;
+        XmlNMTOKEN  l_ver; 
+
+        // Create a new Web Service Doc Instance
+        l_WMSdoc = WebServiceDocument.Factory.newInstance();
+        l_WMS = l_WMSdoc.addNewWebService();
+
+
+        // Create a new XMLToken Instance
+        l_ver = XmlNMTOKEN.Factory.newInstance();
+        l_ver.setStringValue("1.0");
+        l_WMS.xsetVersion(l_ver);
+        
+        // Create a call instance
+        Call l_call;
+
+        // add a new call
+        l_call = l_WMS.addNewCall();
+
+        
+      
+           // Set ICE enabled parm
+        if(UpdatecallOptions.m_iceEnabled) {
+            l_call.setIce(BooleanType.YES);
+        } else {
+            l_call.setIce(BooleanType.NO);
+        } // end if
+     
+           // Set ICE enabled parm
+        if(UpdatecallOptions.m_encryptionEnabled) {
+            l_call.setEncryption(RtpEncryptionOption.DTLS);
+        } else {
+            l_call.setEncryption(RtpEncryptionOption.NONE);
+        } // end if
+     
+     
+        // Set Media getType parm
+        switch (UpdatecallOptions.m_mediaType) {
+            case AUDIO:
+                l_call.setMedia(MediaType.AUDIO);
+                break;
+            case VIDEO:
+                l_call.setMedia(MediaType.AUDIOVIDEO);
+                break;
+            case UNKNOWN:
+                l_call.setMedia(MediaType.UNKNOWN);
+        } // end switch
+        
+        if(UpdatecallOptions.m_signalingEnabled){
+            // Set the call attributes.
+        
+            if(getCallType() == XMSCallType.WEBRTC){
+                logger.info("WebRTC call detected, setting dtmfmode = OUTOFBAND, ice=YES and encryption=dtls");
+                l_call.setIce(BooleanType.YES);
+                l_call.setEncryption(RtpEncryptionOption.DTLS);
+                l_call.setDtmfMode(DtmfModeOption.OUTOFBAND);
+            }
+        } else {
+                logger.info("3pcc call detected - sd= "+UpdatecallOptions.m_sdp.length());
+                if(UpdatecallOptions.m_sdp.length() > 0){
+                    l_call.setSdp("SDPPPLACEHOLDER12345");
+                } else {
+                    l_call.setSdp("");
+                }
+    //             l_call.setSignaling(BooleanType.NO);
+        }
+        //logger.debug("RAW REST generated...." + l_WMS.toString());
+          ByteArrayOutputStream l_newDialog = new ByteArrayOutputStream();
+
+        try {
+            l_WMSdoc.save(l_newDialog);
+            l_rqStr = l_WMSdoc.toString();
+
+            } catch (IOException ex) {
+            logger.error(ex);
+        }
+        
+            String tmp=UpdatecallOptions.m_sdp;
+            tmp=tmp.replaceAll("\r","&#xD;");
+            tmp=tmp.replaceAll( "\n","&#xA;");
+            l_rqStr=l_rqStr.replaceAll("SDPPPLACEHOLDER12345", UpdatecallOptions.m_sdp);
+           
+        //logger.debug ("Returning Payload:\n " + l_rqStr);
+        return l_rqStr;  // Return the requested string...
+
+
+    } // end buildUpdatecallPayload
+    
+    /**
      * Build the payload string to make a call
      * 
      * @param a_destination - where you want to call.
@@ -961,9 +1135,8 @@ public class XMSRestCall extends XMSCall{
         // add a new call
         l_call = l_WMS.addNewCall();
 
-        // Set the call attributes.
-        l_call.setDestinationUri(a_destination); // passed in..
-
+        
+        
         // Set CPA enabled parm
         if(MakecallOptions.m_cpaEnabled) {
             l_call.setCpa(BooleanType.YES);
@@ -971,6 +1144,21 @@ public class XMSRestCall extends XMSCall{
             l_call.setCpa(BooleanType.NO);
         } // end if
 
+           // Set ICE enabled parm
+        if(MakecallOptions.m_iceEnabled) {
+            l_call.setIce(BooleanType.YES);
+        } else {
+            l_call.setIce(BooleanType.NO);
+        } // end if
+     
+           // Set ICE enabled parm
+        if(MakecallOptions.m_encryptionEnabled) {
+            l_call.setEncryption(RtpEncryptionOption.DTLS);
+        } else {
+            l_call.setEncryption(RtpEncryptionOption.NONE);
+        } // end if
+     
+     
         // Set Media getType parm
         switch (MakecallOptions.m_mediaType) {
             case AUDIO:
@@ -983,13 +1171,26 @@ public class XMSRestCall extends XMSCall{
                 l_call.setMedia(MediaType.UNKNOWN);
         } // end switch
         
-        if(getCallType() == XMSCallType.WEBRTC){
-            logger.info("WebRTC call detected, setting dtmfmode = OUTOFBAND, ice=YES and encryption=dtls");
-            l_call.setIce(BooleanType.YES);
-            l_call.setEncryption(RtpEncryptionOption.DTLS);
-            l_call.setDtmfMode(DtmfModeOption.OUTOFBAND);
-        }
+        if(MakecallOptions.m_signalingEnabled){
+            // Set the call attributes.
+            l_call.setDestinationUri(a_destination); // passed in..
         
+            if(getCallType() == XMSCallType.WEBRTC){
+                logger.info("WebRTC call detected, setting dtmfmode = OUTOFBAND, ice=YES and encryption=dtls");
+                l_call.setIce(BooleanType.YES);
+                l_call.setEncryption(RtpEncryptionOption.DTLS);
+                l_call.setDtmfMode(DtmfModeOption.OUTOFBAND);
+            }
+        } else {
+                l_call.setSignaling(BooleanType.NO);
+                logger.info("3pcc call detected");
+                //l_call.setSdp(MakecallOptions.m_sdp);
+                if(MakecallOptions.m_sdp.length()>0){
+                 l_call.setSdp("SDPPPLACEHOLDER12345");
+                } else {
+                    l_call.setSdp("");
+                }
+        }
         //logger.debug("RAW REST generated...." + l_WMS.toString());
           ByteArrayOutputStream l_newDialog = new ByteArrayOutputStream();
 
@@ -1000,7 +1201,12 @@ public class XMSRestCall extends XMSCall{
             } catch (IOException ex) {
             logger.error(ex);
         }
-
+        
+            String tmp=MakecallOptions.m_sdp;
+            tmp=tmp.replaceAll("\r","&#xD;");
+            tmp=tmp.replaceAll( "\n","&#xA;");
+            l_rqStr=l_rqStr.replaceAll("SDPPPLACEHOLDER12345", tmp);
+         
         //logger.debug ("Returning Payload:\n " + l_rqStr);
         return l_rqStr;  // Return the requested string...
 
