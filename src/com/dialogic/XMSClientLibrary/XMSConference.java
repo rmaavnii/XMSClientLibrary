@@ -62,6 +62,7 @@ public abstract class XMSConference extends XMSObject{
      public XMSReturnCode Remove( XMSCall a_call){
          return XMSReturnCode.NOT_IMPLEMENTED;
      }
+      
      /** 
       * Returns the number of calls in the conference.
       * @return 

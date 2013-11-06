@@ -322,7 +322,80 @@ public class XMSRestCall extends XMSCall{
             } // end if
         }
     } // end drop call 
+/**
+     * Unattended / Unsupervised transfer to destination
+     * @param a_dest - URI for the destination
+     * @return 
+     */
+    @Override
+    public XMSReturnCode Transfer( String a_dest){
+        FunctionLogger logger=new FunctionLogger("Transfer",this,m_logger);
+        logger.args(a_dest);
+        
+        String l_urlext;
+        SendCommandResponse RC ;
+        //todo!!: create the payload and add the call id.
+        l_urlext = "calls/" + m_callIdentifier;
 
+        String XMLPAYLOAD;
+       
+        // RDM: Build and return a updatecall payload
+        XMLPAYLOAD = buildUnattendedTransferPayload(a_dest); 
+
+        //logger.info("Sending message ---->  " + XMLPAYLOAD);
+        RC = m_connector.SendCommand(this,RESTOPERATION.PUT, l_urlext, XMLPAYLOAD);
+        
+         if (RC.get_scr_status_code() >= 200 && RC.get_scr_status_code() <= 299){
+                    XMSEvent l_callbackevt = new XMSEvent();
+                    l_callbackevt.CreateEvent(XMSEventType.CALL_UPDATED, this, RC.get_scr_return_xml_payload(), "", RC.toString());
+                    setLastEvent(l_callbackevt);
+            return XMSReturnCode.SUCCESS;
+
+        } else {
+
+            logger.info("Transfer Call Failed, Status Code: " + RC.get_scr_status_code());
+           
+            return XMSReturnCode.FAILURE;
+
+        }
+    }
+      /**
+     * Supervised transfer to another connected call
+     * @param a_call - XMSCall Object of a connectd call
+     * @return 
+     */
+    @Override
+    public XMSReturnCode Transfer( XMSCall a_call){
+        FunctionLogger logger=new FunctionLogger("Transfer",this,m_logger);
+        logger.args(a_call);
+        
+        String l_urlext;
+        SendCommandResponse RC ;
+        //todo!!: create the payload and add the call id.
+        l_urlext = "calls/" + m_callIdentifier;
+
+        String XMLPAYLOAD;
+       
+        // RDM: Build and return a updatecall payload
+        XMLPAYLOAD = buildAttendedTransferPayload(a_call); 
+
+        //logger.info("Sending message ---->  " + XMLPAYLOAD);
+        RC = m_connector.SendCommand(this,RESTOPERATION.PUT, l_urlext, XMLPAYLOAD);
+        
+         if (RC.get_scr_status_code() == 200){
+                    XMSEvent l_callbackevt = new XMSEvent();
+                    l_callbackevt.CreateEvent(XMSEventType.CALL_UPDATED, this, RC.get_scr_return_xml_payload(), "", RC.toString());
+                    setLastEvent(l_callbackevt);
+            return XMSReturnCode.SUCCESS;
+
+        } else {
+
+            logger.info("Transfer Call Failed, Status Code: " + RC.get_scr_status_code());
+           
+            return XMSReturnCode.FAILURE;
+
+        }
+    }
  String RestGetCalledAddress(String rawxml){
      FunctionLogger logger=new FunctionLogger("******RestGetCalledAddress",this,m_logger);
         logger.args(rawxml);
@@ -1558,8 +1631,14 @@ private String buildPlayRecordPayload(String a_playfile,String a_recfile) {
             l_call.setIce(BooleanType.YES);
             l_call.setEncryption(RtpEncryptionOption.DTLS);
             l_call.setDtmfMode(DtmfModeOption.OUTOFBAND);
-        }
-
+        } else {
+             l_call.setDtmfMode(DtmfModeOption.RFC_2833);
+             
+         }
+         l_call.setAsyncDtmf(BooleanType.YES);
+         l_call.setInfoAckMode(InfoAckModeOption.AUTOMATIC);
+         l_call.setSignaling(BooleanType.YES);
+         
         ByteArrayOutputStream l_newDialog = new ByteArrayOutputStream();
 
         try {
@@ -1575,7 +1654,154 @@ private String buildPlayRecordPayload(String a_playfile,String a_recfile) {
 
 
     } // end buildAnswercallPayload
-    
+    /**
+     * CLASS TYPE   :   private
+     * METHOD       :   buildUnattendedTransferPayload
+     *
+     * DESCRIPTION  :   Builds Transfer Payload
+     *
+     * PARAMETERS   :   None
+     *
+     *
+     * RETURN       :   Payload string
+     *
+     * Author(s)    :   Dan Wolanski
+     * Created      :   11/6/2013
+     * Updated      :   11/7/2013
+     *
+     *
+     * HISTORY      :
+     *************************************************************************/
+    private String buildUnattendedTransferPayload(String a_uri) {
+        FunctionLogger logger=new FunctionLogger("buildUnattendedTransferPayload",this,m_logger);
+        String l_rqStr = "";
+
+        WebServiceDocument l_WMSdoc;
+        WebServiceDocument.WebService l_WMS;
+        XmlNMTOKEN  l_ver; 
+
+        // Create a new Web Service Doc Instance
+        l_WMSdoc = WebServiceDocument.Factory.newInstance();
+        l_WMS = l_WMSdoc.addNewWebService();
+
+        Call l_call; // Create a call instance
+        CallAction l_callAction; // Call Action instance
+
+        //PlayrecordDocument.Playrecord l_record;
+        TransferDocument.Transfer l_xfer;
+
+        // Create a new Web Service Doc Instance
+        l_WMSdoc = WebServiceDocument.Factory.newInstance();
+        l_WMS = l_WMSdoc.addNewWebService();
+
+        // Create a new XMLToken Instance
+        l_ver = XmlNMTOKEN.Factory.newInstance();
+        l_ver.setStringValue("1.0");
+        l_WMS.xsetVersion(l_ver);
+
+        // add a new call
+        l_call = l_WMS.addNewCall();
+
+        // Add a new Call Action to the call
+        l_callAction = l_call.addNewCallAction();
+
+        // Add a new Transfer to the callAction
+        l_xfer = l_callAction.addNewTransfer();
+        
+        // Add the Transfer properties
+        l_xfer.setUri(a_uri);
+        
+         
+        ByteArrayOutputStream l_newDialog = new ByteArrayOutputStream();
+
+        try {
+            l_WMSdoc.save(l_newDialog);
+            l_rqStr = l_WMSdoc.toString();
+
+            } catch (IOException ex) {
+            logger.error(ex);
+        }
+
+     //   logger.debug ("Returning Payload:\n " + l_rqStr);
+        return l_rqStr;  // Return the requested string...
+
+
+    } // end buildUnattendedTransfercallPayload
+      
+  /**
+     * CLASS TYPE   :   private
+     * METHOD       :   buildAttendedTransferPayload
+     *
+     * DESCRIPTION  :   Builds Transfer Payload
+     *
+     * PARAMETERS   :   None
+     *
+     *
+     * RETURN       :   Payload string
+     *
+     * Author(s)    :   Dan Wolanski
+     * Created      :   11/6/2013
+     * Updated      :   11/7/2013
+     *
+     *
+     * HISTORY      :
+     *************************************************************************/
+    private String buildAttendedTransferPayload(XMSCall a_call) {
+        FunctionLogger logger=new FunctionLogger("buildAttendedTransferPayload",this,m_logger);
+        String l_rqStr = "";
+
+        WebServiceDocument l_WMSdoc;
+        WebServiceDocument.WebService l_WMS;
+        XmlNMTOKEN  l_ver; 
+
+        // Create a new Web Service Doc Instance
+        l_WMSdoc = WebServiceDocument.Factory.newInstance();
+        l_WMS = l_WMSdoc.addNewWebService();
+
+        Call l_call; // Create a call instance
+        CallAction l_callAction; // Call Action instance
+
+        //PlayrecordDocument.Playrecord l_record;
+        TransferDocument.Transfer l_xfer;
+
+        // Create a new Web Service Doc Instance
+        l_WMSdoc = WebServiceDocument.Factory.newInstance();
+        l_WMS = l_WMSdoc.addNewWebService();
+
+        // Create a new XMLToken Instance
+        l_ver = XmlNMTOKEN.Factory.newInstance();
+        l_ver.setStringValue("1.0");
+        l_WMS.xsetVersion(l_ver);
+
+        // add a new call
+        l_call = l_WMS.addNewCall();
+
+        // Add a new Call Action to the call
+        l_callAction = l_call.addNewCallAction();
+
+        // Add a new Transfer to the callAction
+        l_xfer = l_callAction.addNewTransfer();
+        
+        // Add the Transfer properties
+        l_xfer.setCallId(a_call.getCallIdentifier());
+        
+         
+        ByteArrayOutputStream l_newDialog = new ByteArrayOutputStream();
+
+        try {
+            l_WMSdoc.save(l_newDialog);
+            l_rqStr = l_WMSdoc.toString();
+
+            } catch (IOException ex) {
+            logger.error(ex);
+        }
+
+     //   logger.debug ("Returning Payload:\n " + l_rqStr);
+        return l_rqStr;  // Return the requested string...
+
+
+    } // end buildAttendedTransfercallPayload
+      
     /**
      * CLASS TYPE   :   private
      * METHOD       :   buildJoinPayload

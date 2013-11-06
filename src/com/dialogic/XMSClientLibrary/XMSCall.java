@@ -155,7 +155,23 @@ public abstract class XMSCall extends XMSObject{
     public XMSReturnCode Stop(){
         return XMSReturnCode.NOT_IMPLEMENTED;
     }
-    
+  
+      /**
+     * Unattended / Unsupervised transfer to destination
+     * @param a_dest - URI for the destination
+     * @return 
+     */
+    public XMSReturnCode Transfer( String a_dest){
+        return XMSReturnCode.NOT_IMPLEMENTED;
+    }
+      /**
+     * Supervised transfer to another connected call
+     * @param a_call - XMSCall Object of a connectd call
+     * @return 
+     */
+    public XMSReturnCode Transfer( XMSCall a_call){
+        return XMSReturnCode.NOT_IMPLEMENTED;
+    }
     /**
      * Join / Route 2 Calls together (note this simply a wrapper to Join() 
      * @param a_othercall
