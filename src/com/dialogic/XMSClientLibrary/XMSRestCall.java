@@ -359,6 +359,49 @@ public class XMSRestCall extends XMSCall{
 
         }
     }
+    
+    /**
+     * Redirect to destination
+     * @param a_dest - URI for the destination
+     * @return 
+     */
+    @Override
+    public XMSReturnCode Redirect( String a_dest){
+        FunctionLogger logger=new FunctionLogger("Redirect",this,m_logger);
+        logger.args(a_dest);
+        
+        if(getState()!= XMSCallState.OFFERED){
+            return XMSReturnCode.FAILURE;
+        }
+        
+        String l_urlext;
+        SendCommandResponse RC ;
+        //todo!!: create the payload and add the call id.
+        l_urlext = "calls/" + m_callIdentifier;
+
+        String XMLPAYLOAD;
+       
+        // RDM: Build and return a updatecall payload
+        XMLPAYLOAD = buildRedirectPayload(a_dest); 
+
+        //logger.info("Sending message ---->  " + XMLPAYLOAD);
+        RC = m_connector.SendCommand(this,RESTOPERATION.PUT, l_urlext, XMLPAYLOAD);
+        
+         if (RC.get_scr_status_code() >= 200 && RC.get_scr_status_code() <= 299){
+                    XMSEvent l_callbackevt = new XMSEvent();
+                    l_callbackevt.CreateEvent(XMSEventType.CALL_UPDATED, this, RC.get_scr_return_xml_payload(), "", RC.toString());
+                    setLastEvent(l_callbackevt);
+            return XMSReturnCode.SUCCESS;
+
+        } else {
+
+            logger.info("Redirect Call Failed, Status Code: " + RC.get_scr_status_code());
+           
+            return XMSReturnCode.FAILURE;
+
+        }
+    }
+
       /**
      * Supervised transfer to another connected call
      * @param a_call - XMSCall Object of a connectd call
@@ -1728,6 +1771,79 @@ private String buildPlayRecordPayload(String a_playfile,String a_recfile) {
 
 
     } // end buildUnattendedTransfercallPayload
+    /**
+     * CLASS TYPE   :   private
+     * METHOD       :   buildRedirectPayload
+     *
+     * DESCRIPTION  :   Builds Transfer Payload
+     *
+     * PARAMETERS   :   String to redirect too
+     *
+     *
+     * RETURN       :   Payload string
+     *
+     * Author(s)    :   Dan Wolanski
+     * Created      :   11/6/2013
+     * Updated      :   11/7/2013
+     *
+     *
+     * HISTORY      :
+     *************************************************************************/
+    private String buildRedirectPayload(String a_uri) {
+        FunctionLogger logger=new FunctionLogger("buildRedirectPayload",this,m_logger);
+        String l_rqStr = "";
+
+        WebServiceDocument l_WMSdoc;
+        WebServiceDocument.WebService l_WMS;
+        XmlNMTOKEN  l_ver; 
+
+        // Create a new Web Service Doc Instance
+        l_WMSdoc = WebServiceDocument.Factory.newInstance();
+        l_WMS = l_WMSdoc.addNewWebService();
+
+        Call l_call; // Create a call instance
+        CallAction l_callAction; // Call Action instance
+
+        //PlayrecordDocument.Playrecord l_record;
+        RedirectDocument.Redirect l_redirect;
+
+        // Create a new Web Service Doc Instance
+        l_WMSdoc = WebServiceDocument.Factory.newInstance();
+        l_WMS = l_WMSdoc.addNewWebService();
+
+        // Create a new XMLToken Instance
+        l_ver = XmlNMTOKEN.Factory.newInstance();
+        l_ver.setStringValue("1.0");
+        l_WMS.xsetVersion(l_ver);
+
+        // add a new call
+        l_call = l_WMS.addNewCall();
+
+        // Add a new Call Action to the call
+        l_callAction = l_call.addNewCallAction();
+
+        // Add a new Transfer to the callAction
+        l_redirect = l_callAction.addNewRedirect();
+        
+        // Add the Transfer properties
+        l_redirect.setUri(a_uri);
+        
+         
+        ByteArrayOutputStream l_newDialog = new ByteArrayOutputStream();
+
+        try {
+            l_WMSdoc.save(l_newDialog);
+            l_rqStr = l_WMSdoc.toString();
+
+            } catch (IOException ex) {
+            logger.error(ex);
+        }
+
+     //   logger.debug ("Returning Payload:\n " + l_rqStr);
+        return l_rqStr;  // Return the requested string...
+
+
+    } // end buildRedirectPayload
       
   /**
      * CLASS TYPE   :   private

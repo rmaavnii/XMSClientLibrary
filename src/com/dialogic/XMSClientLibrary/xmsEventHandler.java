@@ -406,8 +406,10 @@ public class xmsEventHandler implements Runnable {
                                                 l_evt.call=null;
                                                 XMSConference l_conf=(XMSConference)l_tmp;
                                                 l_conf.UpdateAndNotify(l_evt);
+                                            } else {
+                                                logger.info("Unable to detect Object Type");
+                                                l_tmp=null;
                                             }
-                                            l_tmp=null;
                                         }
                                     }
                                     xmlString = "";

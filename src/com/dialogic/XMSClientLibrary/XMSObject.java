@@ -268,11 +268,16 @@ public abstract class XMSObject extends Observable implements Observer{
         
     }
     protected void DispatchXMSEvent(XMSEvent a_evt){
-        FunctionLogger logger=new FunctionLogger("PostXMSEvent",this,m_logger);
+        FunctionLogger logger=new FunctionLogger("DispatchXMSEvent",this,m_logger);
         //TODO: We perhaps should have some event distribution thread rather then calling callback directly
         XMSEventCallback l_callback = m_eventcallbackmap.get(a_evt.getEventType());
-        logger.info("Calling Callback for "+a_evt);
-        l_callback.ProcessEvent(a_evt);
+        if(l_callback != null){
+            logger.info("Calling Callback for "+a_evt);
+            l_callback.ProcessEvent(a_evt);
+        } else {
+            logger.info("No Callback for this event, just destroying the event");
+           //do we need to clean up?
+        }
     }
      
     /**

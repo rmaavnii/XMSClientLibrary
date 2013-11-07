@@ -155,7 +155,15 @@ public abstract class XMSCall extends XMSObject{
     public XMSReturnCode Stop(){
         return XMSReturnCode.NOT_IMPLEMENTED;
     }
-  
+     /**
+     * Redirect an incoming call destination
+     * NOTE To use this you need to turn off AUTO ANSWER
+     * @param a_dest - URI for the destination
+     * @return 
+     */
+    public XMSReturnCode Redirect( String a_dest){
+        return XMSReturnCode.NOT_IMPLEMENTED;
+    }
       /**
      * Unattended / Unsupervised transfer to destination
      * @param a_dest - URI for the destination
