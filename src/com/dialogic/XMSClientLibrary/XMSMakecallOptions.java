@@ -30,7 +30,7 @@ public class XMSMakecallOptions {
         m_mediaType = XMSMediaType.AUDIO;
         m_iceEnabled= false;
         m_signalingEnabled = true;
-        m_sdp=null;
+        m_sdp="";
         m_encryptionEnabled = false;
         
     }
