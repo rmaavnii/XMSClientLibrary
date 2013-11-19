@@ -491,6 +491,51 @@ public class XMSRestCall extends XMSCall{
     
     
     } // End Answercall
+     /**
+     * This Answer an incoming call.  
+     *
+     * @return
+     */
+    @Override
+     public XMSReturnCode Acceptcall(){
+        FunctionLogger logger=new FunctionLogger("Acceptcall",this,m_logger);
+        //logger.args(AnswercallOptions);
+         
+        
+
+        String l_urlext;
+        SendCommandResponse RC ;
+        //todo!!: create the payload and add the call id.
+        l_urlext = "calls/" + m_callIdentifier;
+
+        String XMLPAYLOAD;
+        /*
+        XMLPAYLOAD = "<web_service version=\"1.0\">"
+                + "<call answer=\"yes\" media=\""+AnswercallOptions.GetCallTypeAsString()+"\"/>"
+                + "</web_service>";
+        */
+        XMLPAYLOAD=buildAcceptcallPayload();
+       // logger.info("Sending message ---->  " + XMLPAYLOAD);
+        RC = m_connector.SendCommand(this,RESTOPERATION.PUT, l_urlext, XMLPAYLOAD);
+        
+         if (RC.get_scr_status_code() >= 200 && RC.get_scr_status_code() < 300){
+            setState(XMSCallState.ACCEPTED);
+            //TODO: Should likely make a way to obtain the connection info 
+                   
+                   //setConnectionAddress(RC.get_scr_source());
+         //          setCalledAddress(RestGetCalledAddress(RC.get_scr_return_xml_payload()));  
+                    return XMSReturnCode.SUCCESS;
+
+        } else {
+
+            logger.info("Accept Call Failed, Status Code: " + RC.get_scr_status_code());
+            setState(XMSCallState.NULL);
+            return XMSReturnCode.FAILURE;
+
+        }
+    
+    
+    } // End Answercall
      
      /**
      * Join / Route 2 Calls together
@@ -954,6 +999,7 @@ public class XMSRestCall extends XMSCall{
         logger.args("obj="+obj+" arg="+arg);
         XMSEvent l_callbackevt = new XMSEvent();
         if (arg instanceof XMSRestEvent){
+            logger.info("WebSequence "+this.toString()+" {{{XMS->App: EVENT "+arg.toString()+" }}}");
             XMSRestEvent l_evt=(XMSRestEvent) arg;
             //TODO This Method is getting a little combersome, may want to extend out to private OnXXXXEvent functions to segment the readability.
             //TODO Should we support the Ringing event?
@@ -1698,6 +1744,65 @@ private String buildPlayRecordPayload(String a_playfile,String a_recfile) {
 
 
     } // end buildAnswercallPayload
+     /**
+     * CLASS TYPE   :   private
+     * METHOD       :   buildAnswercallPayload
+     *
+     * DESCRIPTION  :   Builds AcceptCall Payload
+     *
+     * PARAMETERS   :   None
+     *
+     *
+     * RETURN       :   Payload string
+     *
+     * Author(s)    :   Dan Wolanski
+     * Created      :   11/19/2013
+     * Updated      :   11/19/2013
+     *
+     *
+     * HISTORY      :
+     *************************************************************************/
+    private String buildAcceptcallPayload() {
+        FunctionLogger logger=new FunctionLogger("buildAcceptcallPayload",this,m_logger);
+        String l_rqStr = "";
+
+        WebServiceDocument l_WMSdoc;
+        WebServiceDocument.WebService l_WMS;
+        XmlNMTOKEN  l_ver; 
+
+        // Create a new Web Service Doc Instance
+        l_WMSdoc = WebServiceDocument.Factory.newInstance();
+        l_WMS = l_WMSdoc.addNewWebService();
+
+
+        // Create a new XMLToken Instance
+        l_ver = XmlNMTOKEN.Factory.newInstance();
+        l_ver.setStringValue("1.0");
+        l_WMS.xsetVersion(l_ver);
+        
+        // Create a call instance
+        Call l_call;
+        // add a new call
+        l_call = l_WMS.addNewCall();
+        
+        l_call.setAccept(BooleanType.YES);
+        //TODO may need to add in a parm to set if this should be yes or no.
+        l_call.setEarlyMedia(BooleanType.YES);
+        ByteArrayOutputStream l_newDialog = new ByteArrayOutputStream();
+
+        try {
+            l_WMSdoc.save(l_newDialog);
+            l_rqStr = l_WMSdoc.toString();
+
+            } catch (IOException ex) {
+            logger.error(ex);
+        }
+
+     //   logger.debug ("Returning Payload:\n " + l_rqStr);
+        return l_rqStr;  // Return the requested string...
+
+
+    } // end buildAcceptcallPayload
     /**
      * CLASS TYPE   :   private
      * METHOD       :   buildUnattendedTransferPayload

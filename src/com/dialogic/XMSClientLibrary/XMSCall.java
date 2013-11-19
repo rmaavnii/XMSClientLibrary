@@ -256,6 +256,15 @@ public abstract class XMSCall extends XMSObject{
         return XMSReturnCode.NOT_IMPLEMENTED;
     }
      /**
+     * This Accept an incoming call, but not answer it
+     *
+     * @return
+     */
+     public XMSReturnCode Acceptcall(){
+
+        return XMSReturnCode.NOT_IMPLEMENTED;
+    }
+     /**
       * Collect DTMF digits
       * @return 
       */

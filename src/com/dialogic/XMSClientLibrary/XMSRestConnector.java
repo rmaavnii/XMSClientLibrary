@@ -300,6 +300,7 @@ public XMSReturnCode Initialize(String a_configfile){
         l_scr = new SendCommandResponse();
         
 
+        logger.info("WebSequence: "+a_call+" {{{App->XMS: "+a_RESTOPERATION+" "+a_xmlPayload+" }}}" );
         m_uri = m_Address + a_urlextension + "?appid=" + m_AppID;
 
         //TODO When a function fails next function after that gets a
@@ -358,6 +359,7 @@ public XMSReturnCode Initialize(String a_configfile){
                     * reduced debug output to 1 line that can represent response
                     */
                    logger.info(a_RESTOPERATION + " STATUS LINE : " + m_httpresponseh.getStatusLine().toString());
+                   //logger.info("WebSequence: "+a_call+" {{{XMS->App: "+a_RESTOPERATION + " STATUS LINE : " + m_httpresponseh.getStatusLine().toString()+" }}}" );
                    break; // end GET
 
                 case POST:
@@ -378,8 +380,10 @@ public XMSReturnCode Initialize(String a_configfile){
                     /**
                     * reduced debug output to 1 line that can represent response
                     */
+                    
                    logger.info(a_RESTOPERATION + " STATUS LINE : " + m_httpresponseh.getStatusLine().toString());
-                    break; // end POST
+                   //logger.info("WebSequence: "+a_call+" {{{XMS->App: "+a_RESTOPERATION + " STATUS LINE : " + m_httpresponseh.getStatusLine().toString()+" }}}" );
+                   break; // end POST
 
                 case PUT:
                     logger.info("Attempted execution of : " + a_RESTOPERATION);
@@ -395,6 +399,7 @@ public XMSReturnCode Initialize(String a_configfile){
                     /**
                     * reduced debug output to 1 line that can represent response
                     */
+                    //logger.info("WebSequence: "+a_call+" {{{XMS->App: "+a_RESTOPERATION + " STATUS LINE : " + m_httpresponseh.getStatusLine().toString()+" }}}" );
                    logger.info(a_RESTOPERATION + " STATUS LINE : " + m_httpresponseh.getStatusLine().toString());
                   
                     break; // end PUT
@@ -419,6 +424,7 @@ public XMSReturnCode Initialize(String a_configfile){
                     /**
                     * reduced debug output to 1 line that can represent response
                     */
+                    //logger.info("WebSequence: "+a_call+" {{{XMS->App: "+a_RESTOPERATION + " STATUS LINE : " + m_httpresponseh.getStatusLine().toString()+" }}}" );
                    logger.info(a_RESTOPERATION + " STATUS LINE : " + m_httpresponseh.getStatusLine().toString());
 
                     break; // end DELETE
@@ -445,7 +451,7 @@ public XMSReturnCode Initialize(String a_configfile){
                     } // end try
                     logger.debug("== BEGIN RETURN PAYLOAD RESPONSE OUTPUT RAW==\n\n" + m_ReturnPayload);
                     logger.debug("== END RETURN PAYLOAD RAW RESPONSE OUTPUT ==");
-
+                    //logger.info("WebSequence: "+a_call+" {{{XMS->App: "+a_RESTOPERATION + " STATUS LINE : " + m_httpresponseh.getStatusLine().toString()+" "+m_ReturnPayload+" }}}" );
         //TODO move the the XMLbeans
                     String delims = "[ ]+";
                     String[] tokens = m_ReturnPayload.split(delims);
@@ -504,8 +510,10 @@ public XMSReturnCode Initialize(String a_configfile){
 
             } // end if
 
+          
         l_scr.set_scr_status_code( m_httpresponseh.getStatusLine().getStatusCode());
         l_scr.set_scr_return_xml_payload(m_ReturnPayload);
+        logger.info("WebSequence: "+a_call+" {{{XMS->App: "+a_RESTOPERATION + " STATUS LINE : " + l_scr.get_scr_status_code() +" "+l_scr.get_scr_return_xml_payload() +" }}}" );
         return l_scr;
 
       

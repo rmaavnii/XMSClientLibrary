@@ -11,6 +11,7 @@ package com.dialogic.XMSClientLibrary;
 public enum XMSCallState {
     NULL,  
     MAKECALL, //outbound calls
+    ACCEPTED,
     CONNECTED, // Call is active for either Inbound or outbound
     PLAY,
     PLAYCOLLECT,

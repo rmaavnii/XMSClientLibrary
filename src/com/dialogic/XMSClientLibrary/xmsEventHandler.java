@@ -326,6 +326,7 @@ public class xmsEventHandler implements Runnable {
                                     xmlStringCleaned = xmlString.substring(startPosition, endPosition);
                                     xmlStringCleaned = "<web_service version=\"1.0\">" + xmlStringCleaned + "</web_service>";
                                     logger.info("xmlStringCleaned: " + xmlStringCleaned);
+                                    //logger.info("WebSequence {{{XMS->App: EVENT "+ xmlStringCleaned+" }}}");
                                 } else {
                                     logger.info("XMLString is null");
                                     xmlStringCleaned = xmlString;

@@ -45,9 +45,15 @@ public class FunctionLogger {
            info("Leaving " + m_function);
            super.finalize();
      }
-        
+     
+     
      public void info(String a_logentry){
          
+         if(a_logentry.contains("WebSequence")){
+             a_logentry=a_logentry.replaceAll("\r","");
+             a_logentry=a_logentry.replaceAll("\n","\\\\n");
+             
+         }
          logger.info(m_obj.toString()+", "+m_function+", "+a_logentry);
      }
      public void error(String a_logentry){
