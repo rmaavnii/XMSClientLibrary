@@ -1446,12 +1446,20 @@ public class XMSRestCall extends XMSCall{
 
                 uriString = (a_playlist.get(i));
                  String l_uristring=uriString;
-                if(uriString.toLowerCase().endsWith(".wav") || uriString.toLowerCase().endsWith(".vid")){
-                    l_uristring=uriString.substring(0, uriString.length()-4);
-                }
+               
                 // TO DO: May need to append the MediaDefaultDirectory
-
-                l_playSource.setLocation("file://"+l_uristring);
+                if( this.PlayOptions.m_mediaType == XMSMediaType.IMAGE){
+                    if(!l_uristring.startsWith("image:")){
+                        l_uristring="image:"+l_uristring;
+                    }
+                    l_playSource.setLocation(l_uristring);
+                }
+                else{
+                     if(uriString.toLowerCase().endsWith(".wav") || uriString.toLowerCase().endsWith(".vid")){
+                       l_uristring=uriString.substring(0, uriString.length()-4);
+                    }
+                    l_playSource.setLocation("file://"+l_uristring);
+                }
   //              logger.debug("Added [" + uriString + "]");
         }
 

@@ -11,5 +11,6 @@ package com.dialogic.XMSClientLibrary;
 public enum XMSMediaType {
     VIDEO,
     AUDIO,
+    IMAGE,
     UNKNOWN
 }

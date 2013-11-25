@@ -17,6 +17,7 @@ public class XMSPlayOptions {
     String m_offset;
     String m_delay;
     String m_repeat;
+  
 
     /**
      * This will Instantiate and Reset all the values to their defaults

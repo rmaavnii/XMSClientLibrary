@@ -424,6 +424,15 @@ public class XMSRestConference extends XMSConference{
 
                 uriString = (a_playlist.get(i));
                  String l_uristring=uriString;
+                 
+                 if( this.PlayOptions.m_mediaType == XMSMediaType.IMAGE){
+                    if(!l_uristring.startsWith("image:")){
+                        l_uristring="image:"+l_uristring;
+                    }
+                    l_playSource.setLocation(l_uristring);
+                }
+                 
+                 else{
                 if(uriString.toLowerCase().endsWith(".wav") || uriString.toLowerCase().endsWith(".vid")){
                     l_uristring=uriString.substring(0, uriString.length()-4);
                 }
@@ -431,6 +440,7 @@ public class XMSRestConference extends XMSConference{
 
                 l_playSource.setLocation("file://"+l_uristring);
   //              logger.debug("Added [" + uriString + "]");
+                 }
         }
 
         //logger.debug("RAW REST generated...." + l_WMS.toString());
