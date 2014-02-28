@@ -1353,6 +1353,18 @@ public class XMSRestCall extends XMSCall{
                     l_call.setSdp("");
                 }
         }
+        
+        if(MakecallOptions.m_calledAddress.length()>0){
+                 l_call.setCalledUri(MakecallOptions.m_calledAddress);
+          }
+        
+        if(MakecallOptions.m_sourceAddress.length()>0){
+                 l_call.setSourceUri(MakecallOptions.m_sourceAddress);
+          }
+        
+        if(MakecallOptions.m_displayName.length()>0){
+                 l_call.setDisplayName(MakecallOptions.m_displayName);
+          }
         //logger.debug("RAW REST generated...." + l_WMS.toString());
           ByteArrayOutputStream l_newDialog = new ByteArrayOutputStream();
 
