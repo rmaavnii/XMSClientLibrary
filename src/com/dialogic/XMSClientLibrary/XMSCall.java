@@ -42,7 +42,8 @@ public abstract class XMSCall extends XMSObject{
      public XMSCollectDigitsOptions CollectDigitsOptions = new XMSCollectDigitsOptions();
      public XMSPlayCollectOptions PlayCollectOptions = new XMSPlayCollectOptions();
      public XMSPlayRecordOptions PlayRecordOptions = new XMSPlayRecordOptions();
-
+     public XMSPlayPhraseOptions PlayPhraseOptions = new XMSPlayPhraseOptions();
+     
      /**
       * CTor for the Object.  Default takes no parms
       */
@@ -283,4 +284,22 @@ public abstract class XMSCall extends XMSObject{
      public XMSReturnCode Updatecall(){
          return XMSReturnCode.NOT_IMPLEMENTED;
      }
+     /**
+      * Playback phrases
+      * @param a_type - The type of phrase to be spoken
+      * @param a_phrase - The phrase to be spoken
+      * @return 
+      */
+     public XMSReturnCode PlayPhrase(XMSPlayPhraseType a_type, String a_phrase){
+         return XMSReturnCode.NOT_IMPLEMENTED;
+     }
+     /**
+      * Play a period of silence 
+      * @param a_duration - 0 – 36000 (in 100 ms units up to 1 hour)
+      * @return 
+      */
+     public XMSReturnCode PlaySilence(String a_duration){
+         return XMSReturnCode.NOT_IMPLEMENTED;
+     }
+     
 }

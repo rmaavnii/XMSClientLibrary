@@ -2604,6 +2604,138 @@ private String buildPlayRecordPayload(String a_playfile,String a_recfile) {
        // logger.debug ("Returning Payload:\n " + l_rqStr);
         return l_rqStr;  // Return the requested string...
     } // end buildPlayCollectPayload
+    
+    
+     /**
+      * Playback phrases
+      * @param a_type - The type of phrase to be spoken
+      * @param a_phrase - The phrase to be spoken
+      * @return 
+      */
+    @Override
+     public XMSReturnCode PlayPhrase(XMSPlayPhraseType a_type, String a_phrase){
+         //<play_source audio_uri=”var://locale=en-US;type=dig;subtype=ndn;value=12345678;”/> 
+          FunctionLogger logger=new FunctionLogger("PlayPhrase",this,m_logger);
+        logger.args("Type "+a_type+" " + "Phrase "+a_phrase+" "+PlayPhraseOptions);
+        String XMLPAYLOAD;
+        SendCommandResponse RC ;
+
+        String l_urlext;
+        l_urlext = "calls/" + m_callIdentifier;
+        
+       
+        XMLPAYLOAD = buildPlayPhrasePayload(a_type,a_phrase); 
+
+        //logger.info("Sending message ---->  " + XMLPAYLOAD);
+        RC = m_connector.SendCommand(this,RESTOPERATION.PUT, l_urlext, XMLPAYLOAD);
+        
+         if (RC.get_scr_status_code() == 200){
+            m_pendingtransactionInfo.setDescription("Play phrase="+a_phrase+" type="+a_type);
+            m_pendingtransactionInfo.setTransactionId(RC.get_scr_transaction_id());
+            m_pendingtransactionInfo.setResponseData(RC);
+            
+            setState(XMSCallState.PLAY);
+                    try {
+                        BlockIfNeeded(XMSEventType.CALL_PLAY_END);
+                    } catch (InterruptedException ex) {
+                        logger.error("Exception:"+ex);
+                    }
+
+                    return XMSReturnCode.SUCCESS;
+
+        } else {
+
+            logger.info("Play Failed, Status Code: " + RC.get_scr_status_code());
+            
+            //setState(XMSCallState.NULL);
+            return XMSReturnCode.FAILURE;
+
+        }
+        
+     }
+     private String buildPlayPhrasePayload(XMSPlayPhraseType a_type, String a_phrase){
+        FunctionLogger logger=new FunctionLogger("buildPlayPhrase",this,m_logger);
+        
+        String l_rqStr = "";
+        String uriString = "";
+
+        WebServiceDocument l_WMSdoc;
+        WebServiceDocument.WebService l_WMS;
+
+        XmlNMTOKEN  l_ver;
+
+        Call l_call; // Create a call instance
+        CallAction l_callAction; // Call Action instance
+
+        Play l_play;
+       // Playcollect l_play;
+        
+        PlaySource l_playSource;
+
+        // Create a new Web Service Doc Instance
+        l_WMSdoc = WebServiceDocument.Factory.newInstance();
+        l_WMS = l_WMSdoc.addNewWebService();
+
+        // Create a new XMLToken Instance
+        l_ver = XmlNMTOKEN.Factory.newInstance();
+        l_ver.setStringValue("1.0");
+        l_WMS.xsetVersion(l_ver);
+
+        // add a new call
+        l_call = l_WMS.addNewCall();
+
+        // Add a new Call Action to the call
+        l_callAction = l_call.addNewCallAction();
+
+        // Add a new Play to the callAction
+        //l_play = l_callAction.addNewPlaycollect();  
+        l_play =l_callAction.addNewPlay();
+
+       
+        l_play.setTerminateDigits(PlayPhraseOptions.m_terminateDigits); 
+      //  l_play.setMaxDigits(CollectDigitsOptions.m_maxDigits); // hardcode this for now..
+
+        
+        
+//      
+        l_playSource = l_play.addNewPlaySource();
+        
+        uriString="var://"+"locale="+PlayPhraseOptions.m_locale+
+                ";voice="+PlayPhraseOptions.m_voice +
+                ";type="+a_type.name().toLowerCase()+
+                ";subtype="+PlayPhraseOptions.GetSubtypeFormat(a_type)+
+                ";value="+a_phrase+
+                ";";
+        l_playSource.setLocation(uriString);
+       
+                
+        
+
+        //logger.debug("RAW REST generated...." + l_WMS.toString());
+        ByteArrayOutputStream l_newDialog = new ByteArrayOutputStream();
+
+        try {
+            l_WMSdoc.save(l_newDialog);
+            l_rqStr = l_WMSdoc.toString();
+
+            } catch (IOException ex) {
+            logger.error(ex);
+        }
+
+        //logger.debug ("Returning Payload:\n " + l_rqStr);
+        return l_rqStr;  // Return the requested string...
+
+     }
+     /**
+      * Play a period of silence 
+      * @param a_duration - 0 – 36000 (in 100 ms units up to 1 hour)
+      * @return 
+      */
+     @Override
+     public XMSReturnCode PlaySilence(String a_duration){
+         return XMSReturnCode.NOT_IMPLEMENTED;
+     }
+    
 public static String unescapeXML( final String xml )
 {
     Pattern xmlEntityRegex = Pattern.compile( "&(#?)([^;]+);" );
