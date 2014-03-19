@@ -1153,6 +1153,17 @@ public class XMSRestCall extends XMSCall{
                     l_callbackevt.CreateEvent(XMSEventType.CALL_DISCONNECTED, this, "", l_callbackevt.getReason(), l_evt.toString()); // 30-Jul-2012 dsl
                     UnblockIfNeeded(l_callbackevt);
                     //end hangup
+                }else if (l_evt.eventType.contentEquals("alarm")) {
+                    logger.info("Processing alarm event");
+                    EventData[] l_datalist=l_evt.event.getEventDataArray();// 30-Jul-2012 dsl
+                    for(EventDataDocument.EventData ed: l_datalist){                            // 30-Jul-2012 dsl
+                        if (ed.getName().contentEquals(EventDataName.REASON.toString())){                              // 30-Jul-2012 dsl
+                            l_callbackevt.setReason(ed.getValue());                             // 30-Jul-2012 dsl
+                        } 
+                    }
+                    l_callbackevt.CreateEvent(XMSEventType.CALL_ALARM, this, "", l_callbackevt.getReason(), l_evt.toString()); // 30-Jul-2012 dsl
+                    
+                    //end hangup
                 }else {
                     logger.info("Unprocessed event type: " + l_evt.eventType);
                 }

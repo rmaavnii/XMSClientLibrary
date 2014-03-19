@@ -43,7 +43,7 @@ public class XMSPlayCollectOptions {
         m_delay             = "0s";
         m_repeat            = "0";
         m_mediaType         = XMSMediaType.AUDIO;
-        m_isBargeEnable     = false;
+        m_isBargeEnable     = true;
         m_clearDB           = true;
         m_maxDigits         = "1";   
         m_timeoutValue      = "";
