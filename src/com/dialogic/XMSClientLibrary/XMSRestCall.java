@@ -2732,8 +2732,44 @@ private String buildPlayRecordPayload(String a_playfile,String a_recfile) {
       * @return 
       */
      @Override
-     public XMSReturnCode PlaySilence(String a_duration){
-         return XMSReturnCode.NOT_IMPLEMENTED;
+     public XMSReturnCode PlaySilence(int a_duration){
+          //<play_source audio_uri=”var://locale=en-US;type=dig;subtype=ndn;value=12345678;”/> 
+          FunctionLogger logger=new FunctionLogger("PlaySilence",this,m_logger);
+        logger.args("Duration "+a_duration);
+        String XMLPAYLOAD;
+        SendCommandResponse RC ;
+
+        String l_urlext;
+        l_urlext = "calls/" + m_callIdentifier;
+        
+       
+        XMLPAYLOAD = buildPlayPhrasePayload(XMSPlayPhraseType.SILENCE,Integer.toString(a_duration)); 
+
+        //logger.info("Sending message ---->  " + XMLPAYLOAD);
+        RC = m_connector.SendCommand(this,RESTOPERATION.PUT, l_urlext, XMLPAYLOAD);
+        
+         if (RC.get_scr_status_code() == 200){
+            m_pendingtransactionInfo.setDescription("Play Silence duration="+a_duration);
+            m_pendingtransactionInfo.setTransactionId(RC.get_scr_transaction_id());
+            m_pendingtransactionInfo.setResponseData(RC);
+            
+            setState(XMSCallState.PLAY);
+                    try {
+                        BlockIfNeeded(XMSEventType.CALL_PLAY_END);
+                    } catch (InterruptedException ex) {
+                        logger.error("Exception:"+ex);
+                    }
+
+                    return XMSReturnCode.SUCCESS;
+
+        } else {
+
+            logger.info("Play Failed, Status Code: " + RC.get_scr_status_code());
+            
+            //setState(XMSCallState.NULL);
+            return XMSReturnCode.FAILURE;
+
+        }
      }
     
 public static String unescapeXML( final String xml )

@@ -298,7 +298,7 @@ public abstract class XMSCall extends XMSObject{
       * @param a_duration - 0 – 36000 (in 100 ms units up to 1 hour)
       * @return 
       */
-     public XMSReturnCode PlaySilence(String a_duration){
+     public XMSReturnCode PlaySilence(int a_duration){
          return XMSReturnCode.NOT_IMPLEMENTED;
      }
      

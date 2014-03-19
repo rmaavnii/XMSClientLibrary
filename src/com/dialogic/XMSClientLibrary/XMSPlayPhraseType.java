@@ -106,7 +106,11 @@ public enum XMSPlayPhraseType {
      * <i>Example: "a34bc" is spoken as "A, three, four, B, C" </i>
 
      */
-    STRING 
+    STRING ,
+    /** Plays a period of silence.
+     * 0 – 36000 (in 100 ms units up to 1 hour) 
+     */
+    SILENCE
     
 }
 
