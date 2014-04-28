@@ -43,6 +43,7 @@ public abstract class XMSCall extends XMSObject{
      public XMSPlayCollectOptions PlayCollectOptions = new XMSPlayCollectOptions();
      public XMSPlayRecordOptions PlayRecordOptions = new XMSPlayRecordOptions();
      public XMSPlayPhraseOptions PlayPhraseOptions = new XMSPlayPhraseOptions();
+     public XMSSendMessageOptions SendMessageOptions = new XMSSendMessageOptions();
      
      /**
       * CTor for the Object.  Default takes no parms
@@ -301,5 +302,12 @@ public abstract class XMSCall extends XMSObject{
      public XMSReturnCode PlaySilence(int a_duration){
          return XMSReturnCode.NOT_IMPLEMENTED;
      }
-     
+     /**
+      * Send out the message using MRCP 
+      * @param a_message - String that is to be sent
+      * @return 
+      */
+     public XMSReturnCode SendMessage(String a_message){
+         return XMSReturnCode.NOT_IMPLEMENTED;
+     }
 }

@@ -207,12 +207,12 @@ public class XMSRestCall extends XMSCall{
     }
    
     /**
-     * Send a XMS Message 
+     * Send a XMS REST Message 
      * @return 
      * Event - NONE
      */
-    public SendCommandResponse SendMessage(String XMLPAYLOAD){
-        FunctionLogger logger=new FunctionLogger("SendMessage",this,m_logger);
+    public SendCommandResponse SendRestMessage(String XMLPAYLOAD){
+        FunctionLogger logger=new FunctionLogger("SendRestMessage",this,m_logger);
         
         SendCommandResponse RC ;
         
@@ -439,6 +439,55 @@ public class XMSRestCall extends XMSCall{
 
         }
     }
+    
+     /**
+      * Send out the message using MRCP 
+      * @param a_message - String that is to be sent
+      * @return 
+      */
+    @Override
+     public XMSReturnCode SendMessage(String a_message){
+         FunctionLogger logger=new FunctionLogger("SendMessage",this,m_logger);
+        logger.args(a_message);
+        
+             
+        String l_urlext;
+        SendCommandResponse RC ;
+        //todo!!: create the payload and add the call id.
+        l_urlext = "calls/" + m_callIdentifier;
+
+        String XMLPAYLOAD;
+       
+        // RDM: Build and return a updatecall payload
+        XMLPAYLOAD = buildSendMessagePayload(a_message); 
+
+      //  logger.info("Sending message ---->  " + XMLPAYLOAD);
+        RC = m_connector.SendCommand(this,RESTOPERATION.PUT, l_urlext, XMLPAYLOAD);
+          
+         if (RC.get_scr_status_code() == 200){
+            m_pendingtransactionInfo.setDescription("SendMessage="+a_message);
+            m_pendingtransactionInfo.setTransactionId(RC.get_scr_transaction_id());
+            m_pendingtransactionInfo.setResponseData(RC);
+            
+            setState(XMSCallState.SENDMESSAGE);
+                    try {
+                        BlockIfNeeded(XMSEventType.CALL_SENDMESSAGE_END);
+                    } catch (InterruptedException ex) {
+                        logger.error("Exception:"+ex);
+                    }
+
+                    return XMSReturnCode.SUCCESS;
+
+        } else {
+
+            logger.info("SendMessage Failed, Status Code: " + RC.get_scr_status_code());
+            
+            //setState(XMSCallState.NULL);
+            return XMSReturnCode.FAILURE;
+
+        }
+         
+     }
  String RestGetCalledAddress(String rawxml){
      FunctionLogger logger=new FunctionLogger("******RestGetCalledAddress",this,m_logger);
         logger.args(rawxml);
@@ -1164,6 +1213,33 @@ public class XMSRestCall extends XMSCall{
                     l_callbackevt.CreateEvent(XMSEventType.CALL_ALARM, this, "", l_callbackevt.getReason(), l_evt.toString()); // 30-Jul-2012 dsl
                     
                     //end hangup
+                } else if (l_evt.eventType.contentEquals("message") ) {
+                    logger.info("Processing message event");
+                    EventData[] l_datalist=l_evt.event.getEventDataArray();// 30-Jul-2012 dsl
+                    for(EventDataDocument.EventData ed: l_datalist){                            // 30-Jul-2012 dsl
+                        if (ed.getName().contentEquals(EventDataName.REASON.toString())){                              // 30-Jul-2012 dsl
+                            l_callbackevt.setReason(ed.getValue());                             // 30-Jul-2012 dsl
+                        } else if (ed.getName().contentEquals(EventDataName.CONTENT.toString())){                              // 30-Jul-2012 dsl
+                            l_callbackevt.setData(ed.getValue());                             // 30-Jul-2012 dsl
+                            logger.info("setting data content to "+l_callbackevt.getData());
+                        }
+                        
+                    }
+                    l_callbackevt.CreateEvent(XMSEventType.CALL_MESSAGE, this, l_callbackevt.getData(), l_callbackevt.getReason(), l_evt.toString()); // 30-Jul-2012 dsl
+                    UnblockIfNeeded(l_callbackevt);
+                    //end hangup
+                }else if (l_evt.eventType.contentEquals("end_send_message") ) {
+                    logger.info("Processing end_send_message event");
+                    EventData[] l_datalist=l_evt.event.getEventDataArray();// 30-Jul-2012 dsl
+                    for(EventDataDocument.EventData ed: l_datalist){                            // 30-Jul-2012 dsl
+                        if (ed.getName().contentEquals(EventDataName.REASON.toString())){                              // 30-Jul-2012 dsl
+                            l_callbackevt.setReason(ed.getValue());                             // 30-Jul-2012 dsl
+                        } 
+                    }
+                    setState(XMSCallState.CONNECTED);
+                    l_callbackevt.CreateEvent(XMSEventType.CALL_SENDMESSAGE_END, this, "", l_callbackevt.getReason(), l_evt.toString()); // 30-Jul-2012 dsl
+                    UnblockIfNeeded(l_callbackevt);
+                    //end hangup
                 }else {
                     logger.info("Unprocessed event type: " + l_evt.eventType);
                 }
@@ -1310,28 +1386,7 @@ public class XMSRestCall extends XMSCall{
 
         
         
-        // Set CPA enabled parm
-        if(MakecallOptions.m_cpaEnabled) {
-            l_call.setCpa(BooleanType.YES);
-        } else {
-            l_call.setCpa(BooleanType.NO);
-        } // end if
-
-           // Set ICE enabled parm
-        if(MakecallOptions.m_iceEnabled) {
-            l_call.setIce(BooleanType.YES);
-        } else {
-            l_call.setIce(BooleanType.NO);
-        } // end if
-     
-           // Set ICE enabled parm
-        if(MakecallOptions.m_encryptionEnabled) {
-            l_call.setEncryption(RtpEncryptionOption.DTLS);
-        } else {
-            l_call.setEncryption(RtpEncryptionOption.NONE);
-        } // end if
-     
-     
+        
         // Set Media getType parm
         switch (MakecallOptions.m_mediaType) {
             case AUDIO:
@@ -1340,31 +1395,72 @@ public class XMSRestCall extends XMSCall{
             case VIDEO:
                 l_call.setMedia(MediaType.AUDIOVIDEO);
                 break;
+            case MESSAGE:
+                l_call.setMedia(MediaType.MESSAGE);
+                break;
             case UNKNOWN:
                 l_call.setMedia(MediaType.UNKNOWN);
         } // end switch
         
-        if(MakecallOptions.m_signalingEnabled){
-            // Set the call attributes.
-            l_call.setDestinationUri(a_destination); // passed in..
-        
-            if(getCallType() == XMSCallType.WEBRTC){
-                logger.info("WebRTC call detected, setting dtmfmode = OUTOFBAND, ice=YES and encryption=dtls");
+        if(MakecallOptions.m_mediaType != XMSMediaType.MESSAGE){
+            // Set CPA enabled parm
+            if(MakecallOptions.m_cpaEnabled) {
+                l_call.setCpa(BooleanType.YES);
+            } else {
+                l_call.setCpa(BooleanType.NO);
+            } // end if
+
+               // Set ICE enabled parm
+            if(MakecallOptions.m_iceEnabled) {
                 l_call.setIce(BooleanType.YES);
+            } else {
+                l_call.setIce(BooleanType.NO);
+            } // end if
+
+               // Set ICE enabled parm
+            if(MakecallOptions.m_encryptionEnabled) {
                 l_call.setEncryption(RtpEncryptionOption.DTLS);
-                l_call.setDtmfMode(DtmfModeOption.OUTOFBAND);
-            }
-        } else {
-                l_call.setSignaling(BooleanType.NO);
-                logger.info("3pcc call detected");
-                //l_call.setSdp(MakecallOptions.m_sdp);
-                if(MakecallOptions.m_sdp.length()>0){
-                 l_call.setSdp("SDPPPLACEHOLDER12345");
-                } else {
-                    l_call.setSdp("");
+            } else {
+                l_call.setEncryption(RtpEncryptionOption.NONE);
+            } // end if
+
+
+            if(MakecallOptions.m_signalingEnabled){
+                // Set the call attributes.
+                l_call.setDestinationUri(a_destination); // passed in..
+
+                if(getCallType() == XMSCallType.WEBRTC){
+                    logger.info("WebRTC call detected, setting dtmfmode = OUTOFBAND, ice=YES and encryption=dtls");
+                    l_call.setIce(BooleanType.YES);
+                    l_call.setEncryption(RtpEncryptionOption.DTLS);
+                    l_call.setDtmfMode(DtmfModeOption.OUTOFBAND);
                 }
+            } else {
+                    l_call.setSignaling(BooleanType.NO);
+                    logger.info("3pcc call detected");
+                    //l_call.setSdp(MakecallOptions.m_sdp);
+                    if(MakecallOptions.m_sdp.length()>0){
+                     l_call.setSdp("SDPPPLACEHOLDER12345");
+                    } else {
+                        l_call.setSdp("");
+                    }
+            }
+        }else{
+             
+             if(MakecallOptions.m_signalingEnabled){
+                 l_call.setDestinationUri(a_destination); // passed in..
+             }else{
+                   l_call.setSignaling(BooleanType.NO);
+                    logger.info("3pcc call detected");
+                    //l_call.setSdp(MakecallOptions.m_sdp);
+                    if(MakecallOptions.m_sdp.length()>0){
+                     l_call.setSdp("SDPPPLACEHOLDER12345");
+                    } else {
+                        l_call.setSdp("");
+                    }
+                  
+             }
         }
-        
         if(MakecallOptions.m_calledAddress.length()>0){
                  l_call.setCalledUri(MakecallOptions.m_calledAddress);
           }
@@ -1741,25 +1837,33 @@ private String buildPlayRecordPayload(String a_playfile,String a_recfile) {
             case VIDEO:
                 l_call.setMedia(MediaType.AUDIOVIDEO);
                 break;
+            case MESSAGE:
+                l_call.setMedia(MediaType.MESSAGE);
+                break;
+            
             case UNKNOWN:
                 l_call.setMedia(MediaType.UNKNOWN);
         } // end switch
 
         l_call.setAnswer(BooleanType.YES);
-    //    logger.debug("RAW REST generated...."+l_WMS.toString());
-         if(getCallType() == XMSCallType.WEBRTC){
-            logger.info("WebRTC call detected, setting dtmfmode = OUTOFBAND, ice=YES and encryption=dtls");
-            l_call.setIce(BooleanType.YES);
-            l_call.setEncryption(RtpEncryptionOption.DTLS);
-            l_call.setDtmfMode(DtmfModeOption.OUTOFBAND);
+        // all that is supported for answer on message type is answer and media
+        if(AnswercallOptions.m_mediatype != XMSMediaType.MESSAGE){
+        //    logger.debug("RAW REST generated...."+l_WMS.toString());
+             if(getCallType() == XMSCallType.WEBRTC){
+                logger.info("WebRTC call detected, setting dtmfmode = OUTOFBAND, ice=YES and encryption=dtls");
+                l_call.setIce(BooleanType.YES);
+                l_call.setEncryption(RtpEncryptionOption.DTLS);
+                l_call.setDtmfMode(DtmfModeOption.OUTOFBAND);
+            } else {
+                 l_call.setDtmfMode(DtmfModeOption.RFC_2833);
+
+             }
+             l_call.setAsyncDtmf(BooleanType.YES);
+             l_call.setInfoAckMode(AckModeOption.AUTOMATIC);
+             l_call.setSignaling(BooleanType.YES);
         } else {
-             l_call.setDtmfMode(DtmfModeOption.RFC_2833);
-             
-         }
-         l_call.setAsyncDtmf(BooleanType.YES);
-         l_call.setInfoAckMode(InfoAckModeOption.AUTOMATIC);
-         l_call.setSignaling(BooleanType.YES);
-         
+            logger.info("Setting to MediaType Message, omitting other default parms");
+        }
         ByteArrayOutputStream l_newDialog = new ByteArrayOutputStream();
 
         try {
@@ -1980,7 +2084,79 @@ private String buildPlayRecordPayload(String a_playfile,String a_recfile) {
 
 
     } // end buildRedirectPayload
-      
+  /**
+     * CLASS TYPE   :   private
+     * METHOD       :   buildRedirectPayload
+     *
+     * DESCRIPTION  :   Builds Transfer Payload
+     *
+     * PARAMETERS   :   String to redirect too
+     *
+     *
+     * RETURN       :   Payload string
+     *
+     * Author(s)    :   Dan Wolanski
+     * Created      :   11/6/2013
+     * Updated      :   11/7/2013
+     *
+     *
+     * HISTORY      :
+     *************************************************************************/
+    private String buildSendMessagePayload(String a_message) {
+        FunctionLogger logger=new FunctionLogger("buildSendMessagePayload",this,m_logger);
+        String l_rqStr = "";
+
+        WebServiceDocument l_WMSdoc;
+        WebServiceDocument.WebService l_WMS;
+        XmlNMTOKEN  l_ver; 
+
+        // Create a new Web Service Doc Instance
+        l_WMSdoc = WebServiceDocument.Factory.newInstance();
+        l_WMS = l_WMSdoc.addNewWebService();
+
+        Call l_call; // Create a call instance
+        CallAction l_callAction; // Call Action instance
+
+        //PlayrecordDocument.Playrecord l_record;
+        SendMessageDocument.SendMessage l_sendmessage;
+
+        // Create a new Web Service Doc Instance
+        l_WMSdoc = WebServiceDocument.Factory.newInstance();
+        l_WMS = l_WMSdoc.addNewWebService();
+
+        // Create a new XMLToken Instance
+        l_ver = XmlNMTOKEN.Factory.newInstance();
+        l_ver.setStringValue("1.0");
+        l_WMS.xsetVersion(l_ver);
+
+        // add a new call
+        l_call = l_WMS.addNewCall();
+
+        // Add a new Call Action to the call
+        l_callAction = l_call.addNewCallAction();
+
+        // Add a new Transfer to the callAction
+        l_sendmessage = l_callAction.addNewSendMessage();
+        
+        l_sendmessage.setContentType(SendMessageOptions.m_contentType);
+        l_sendmessage.setReport(SendMessageDocument.SendMessage.Report.BOTH);
+        l_sendmessage.setContent(a_message);
+        ByteArrayOutputStream l_newDialog = new ByteArrayOutputStream();
+
+        try {
+            l_WMSdoc.save(l_newDialog);
+            l_rqStr = l_WMSdoc.toString();
+
+            } catch (IOException ex) {
+            logger.error(ex);
+        }
+
+       // logger.debug ("Returning Payload:\n " + l_rqStr);
+        return l_rqStr;  // Return the requested string...
+
+
+    } // end buildSendMessage
+          
   /**
      * CLASS TYPE   :   private
      * METHOD       :   buildAttendedTransferPayload

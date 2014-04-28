@@ -19,6 +19,8 @@ public enum XMSEventType {
     CALL_PLAYRECORD_END,
     CALL_RECORD_END,
     CALL_UPDATED,
-    CALL_ALARM
+    CALL_ALARM,
+    CALL_MESSAGE ,
+    CALL_SENDMESSAGE_END
        
 }

@@ -12,5 +12,6 @@ public enum XMSMediaType {
     VIDEO,
     AUDIO,
     IMAGE,
+    MESSAGE,
     UNKNOWN
 }

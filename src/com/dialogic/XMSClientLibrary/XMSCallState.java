@@ -23,5 +23,6 @@ public enum XMSCallState {
     OFFERED, // inbound calls
     UPDATECALL,
     DISCONNECTED, 
-    REJECTED
+    REJECTED,
+    SENDMESSAGE
 }
